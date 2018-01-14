@@ -1,12 +1,14 @@
 package fi.helsinki.eduview.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author: hpr
@@ -18,21 +20,54 @@ public class MainController {
     @Autowired
     private JsonService jsonService;
 
-    @RequestMapping(value = "/ajax/educations", produces = "application/json; charset=utf-8")
+
+    @RequestMapping(value = "/api/educations", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getEducations() throws Exception {
         return jsonService.getEducations();
     }
 
-    @RequestMapping(value = "/ajax/by_id/{id}", produces = "application/json; charset=utf-8")
+    @RequestMapping(value = "/api/by_group_id/{groupId}", produces = "application/json; charset=utf-8")
     @ResponseBody
-    public String getById(@PathVariable String id) throws Exception {
+    public String getStructureByBothIds(@PathVariable String groupId) throws Exception {
+        return jsonService.getByGroupId(groupId);
+    }
+
+    @RequestMapping(value = "/api/by_id/{id}", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getStructureById(@PathVariable String id) throws Exception {
         return jsonService.getById(id);
     }
 
-    @RequestMapping(value = "/ajax/tree/{id}", produces = "application/json; charset=utf-8")
+    @RequestMapping(value = "/api/all_ids", produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     @ResponseBody
-    public String getTree(@PathVariable String id) throws Exception {
+    public String getByAllIds(@RequestBody String ids) throws IOException {
+        List<String> idList = parseIds(ids);
+        return jsonService.getByAllIds(idList);
+    }
+
+    private List<String> parseIds(String ids) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> list = mapper.readValue(ids, TypeFactory.defaultInstance().constructCollectionType(List.class, String.class));
+        return list;
+    }
+
+//    @RequestMapping(value = "/api/structure/tree/{id}", produces = "application/json; charset=utf-8")
+//    @ResponseBody
+//    public String getStructureTree(@PathVariable String id) throws Exception {
+//        return jsonService.traverseStructureTree(id);
+//        return null;
+//    }
+
+    @RequestMapping(value = "/api/by_id_nodes/{id}", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getRuleById(@PathVariable String id) throws Exception {
+        return jsonService.getNodesById(id);
+    }
+
+    @RequestMapping(value = "/api/rule/tree/{id}", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getRuleTree(@PathVariable String id) throws Exception {
         return jsonService.traverseTree(id);
     }
 }

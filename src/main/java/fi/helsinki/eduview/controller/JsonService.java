@@ -1,8 +1,10 @@
 package fi.helsinki.eduview.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -43,22 +45,51 @@ public class JsonService {
         init = true;
     }
 
+    public String getNodesById(String id) throws Exception {
+        ArrayNode array = mapper.createArrayNode();
+        JsonNode subNode = findFromAllById(id);
+        if(subNode != null) {
+            array.add(subNode);
+        }
+//        subNode = getByGroupId(id);
+//        if(subNode != null) {
+//            array.addAll((ArrayNode)subNode);
+//        }
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(array);
+    }
+
     public String getEducations() throws IOException {
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(educations);
+        ObjectNode wrapper = mapper.createObjectNode();
+        ArrayNode array = mapper.createArrayNode();
+        for(JsonNode node : educations) {
+            if(node.get("documentState").asText().equals("ACTIVE")) {
+                array.add(node);
+            }
+        }
+        wrapper.putArray("educations").addAll(array);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
     }
 
     public String getById(String id) throws Exception {
+        JsonNode response = findFromAllById(id);
+        if(response != null) {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+        }
+        return null;
+    }
+
+    private JsonNode findFromAllById(String id) throws Exception {
         JsonNode node = findNodeById(id, educations);
         if(node == null) {
             node = findNodeById(id, modules);
         }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        return node;
     }
 
-    private JsonNode findNodeByGroupId(String id, JsonNode root) {
+    private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList) {
         ArrayNode array = mapper.createArrayNode();
-        for(JsonNode child : root) {
-            if (child.get("groupId").asText().equals(id)) {
+        for(JsonNode child : nodeList) {
+            if (child.get("groupId").asText().equals(id) && child.get("documentState").asText().equals("ACTIVE")) {
                 array.add(child);
             }
         }
@@ -67,7 +98,7 @@ public class JsonService {
 
     private JsonNode findNodeById(String id, List<JsonNode> root) throws Exception {
         for(JsonNode child : root) {
-            if(child.get("id").asText().equals(id)) {
+            if(child.get("id").asText().equals(id) && child.get("documentState").asText().equals("ACTIVE")) {
                 return child;
             }
         }
@@ -91,6 +122,15 @@ public class JsonService {
             unfetchedIds.addAll(newIds);
             traverse(results, modules, unfetchedIds, order);
         }
+
+        List<JsonNode> notActive = new ArrayList<>();
+        for(JsonNode sub : results) {
+            if(!sub.get("documentState").asText().equals("ACTIVE")) {
+                notActive.add(sub);
+            }
+        }
+        results.removeAll(notActive);
+
         Collections.sort(results, new Comparator<JsonNode>() {
             @Override
             public int compare(JsonNode o1, JsonNode o2) {
@@ -103,10 +143,9 @@ public class JsonService {
     }
 
     private void traverse(List<JsonNode> results, List<JsonNode> array, Set<String> idsToCheck, List<String> order) {
-        Set<String> knownGroups = new HashSet<>();
 
         while(!idsToCheck.isEmpty()) {
-            List<String> found = new ArrayList<>();
+            int found = 0;
             List<String> newIds = new ArrayList<>();
             for(JsonNode mod : array) {
                 if(results.contains(mod)) {
@@ -117,16 +156,15 @@ public class JsonService {
                 String groupId = mod.get("groupId").asText();
 
                 if(idsToCheck.contains(id)) {
-                    found.add(id);
                     results.add(mod);
+                    found++;
                     newLocalIds = handleNodeTraverse(mod);
                     order.addAll(order.indexOf(id) + 1, newLocalIds);
                     idsToCheck.remove(id);
 
                 } else if(idsToCheck.contains(groupId)) {
-                    knownGroups.add(groupId);
-                    found.add(groupId);
                     results.add(mod);
+                    found++;
                     newLocalIds = handleNodeTraverse(mod);
                     order.add(order.indexOf(groupId)+1, id);
                     order.addAll(order.indexOf(id)+1, newLocalIds);
@@ -135,7 +173,7 @@ public class JsonService {
                     newIds.addAll(newLocalIds);
                 }
             }
-            if(newIds.isEmpty() && knownGroups.equals(idsToCheck) && found.isEmpty()) {
+            if(found == 0) {
                 break;
             } else {
                 idsToCheck.addAll(newIds);
@@ -156,7 +194,29 @@ public class JsonService {
         return newIds;
     }
 
-    public String getByGroupId(String groupId) {
-        return null;
+    public String getByGroupId(String groupId) throws JsonProcessingException {
+        ArrayNode moduleResults = findByGroupId(groupId);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleResults);
+    }
+
+    private ArrayNode findByGroupId(String groupId) {
+        ArrayNode node = mapper.createArrayNode();
+//        ArrayNode results = findNodeByGroupId(groupId, educations);
+//        if(results != null) {
+//            node.addAll(results);
+//        }
+        ArrayNode moduleResults = findNodeByGroupId(groupId, modules);
+        if(moduleResults != null) {
+            node.addAll(moduleResults);
+        }
+        return moduleResults;
+    }
+
+    public String getByAllIds(List<String> idList) throws JsonProcessingException {
+        ArrayNode results = mapper.createArrayNode();
+        for(String id : idList) {
+            results.addAll(findByGroupId(id));
+        }
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(results);
     }
 }
