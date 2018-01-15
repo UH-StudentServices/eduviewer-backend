@@ -76,11 +76,12 @@ class Element extends React.Component {
             case 'Education':
                 return this.renderEducation(elem);
             case 'DegreeProgramme':
-                return this.renderDegreeProgramme(elem);
+                //return this.renderDegreeProgramme(elem);
             case 'GroupingModule':
-                return this.renderGroupingModule(elem);
+                //return this.renderGroupingModule(elem);
             case 'StudyModule':
-                return this.renderStudyModule(elem);
+                //return this.renderStudyModule(elem);
+                return this.renderOtherTypes(elem);
             default:
                 return (
                     <ul>
@@ -109,56 +110,113 @@ class Element extends React.Component {
         )
     }
 
-    renderDegreeProgramme(elem) {
-        var rules = getRules(elem.rule);
+    renderOtherTypes(elem) {
+        var rules = parseRule(elem.rule);
         return (
             <ul>
                 <li><b>{elem.name.fi}</b></li>
                 <li>{elem.type}</li>
-                <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
+                {elem.targetCredits != null && <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>}
+                {rules.modules.length > 0 &&
                 <li>
                     Osat:<br/>
                     <ul>
-                        {rules}
+                        <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
                     </ul>
+                </li>}
+                <li>
+                    Kurssit: <br/>
+                    <CourseList key={'cu-' + elem.id} ids={rules.courses}/>
                 </li>
             </ul>
         )
     }
 
-    renderGroupingModule(elem) {
-        var rules = getRules(elem.rule);
-        return (
-            <ul>
-                <li><b>{elem.name.fi}</b></li>
-                <li>{elem.type}</li>
-                <li>
-                    Osat:<br/>
-                    <ul>
-                        {rules}
-                    </ul>
-                </li>
-            </ul>
-        )
-    }
+    //renderDegreeProgramme(elem) {
+    //    var rules = parseRule(elem.rule);
+    //    console.log("groupingmodule: " + elem.id);
+    //    console.log(rules);
+    //    // parse elements from list
+    //    return (
+    //        <ul>
+    //            <li><b>{elem.name.fi}</b></li>
+    //            <li>{elem.type}</li>
+    //            <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
+    //            <li>
+    //                Osat:<br/>
+    //                <ul>
+    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
+    //                </ul>
+    //            </li>
+    //        </ul>
+    //    )
+    //}
+    //
+    //renderGroupingModule(elem) {
+    //    var rules = parseRule(elem.rule);
+    //    console.log("groupingmodule: " + elem.id)
+    //    console.log(rules);
+    //    return (
+    //        <ul>
+    //            <li><b>{elem.name.fi}</b></li>
+    //            <li>{elem.type}</li>
+    //            <li>
+    //                Osat:<br/>
+    //                <ul>
+    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
+    //                </ul>
+    //            </li>
+    //        </ul>
+    //    )
+    //}
+    //
+    //renderStudyModule(elem) {
+    //    var rules = parseRule(elem.rule);
+    //    return (
+    //        <ul>
+    //            <li><b>{elem.name.fi}</b></li>
+    //            <li>{elem.type}</li>
+    //            <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
+    //            {rules.modules.length > 0 &&
+    //                <li>
+    //                Osat:<br/>
+    //                <ul>
+    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
+    //                </ul>
+    //            </li>}
+    //            <li>
+    //                Kurssit: <br/>
+    //                {rules.courses}
+    //            </li>
+    //        </ul>
+    //    )
+    //}
 
-    renderStudyModule(elem) {
-        var rules = getRules(elem.rule);
-        return (
-            <ul>
-                <li><b>{elem.name.fi}</b></li>
-                <li>{elem.type}</li>
-                <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
-                <li>
-                    Osat:<br/>
-                    <ul>
-                        {rules}
-                    </ul>
-                </li>
-            </ul>
-        )
-    }
+}
 
+function parseRule(rule) {
+    var modules = [];
+    var courses = [];
+    var response;
+    if(rule.rule != null) {
+        response = parseRule(rule.rule);
+        modules = modules.concat(response.modules);
+        courses = courses.concat(response.courses);
+    } else if(rule.rules != null) {
+        for(var i = 0; i < rule.rules.length; i++) {
+            response = parseRule(rule.rules[i]);
+            modules = modules.concat(response.modules);
+            courses = courses.concat(response.courses);
+        }
+
+    } else {
+        if(rule.type == 'ModuleRule') {
+            modules.push(rule.moduleGroupId);
+        } else if(rule.type == 'CourseUnitRule') {
+            courses.push(rule.courseUnitGroupId);
+        }
+    }
+    return { modules: modules, courses: courses }
 }
 
 function getRules(rule) {
@@ -202,165 +260,36 @@ function getElementStructure(struct) {
 
 }
 
-// end::app[]
-
-// tag::employee-list[]
-class EducationList extends React.Component{
-    render() {
-        var educations = this.props.educations.map(education =>
-            <Education key={education.id} education={education}/>
-        );
-        console.log("EDucations: ");
-        console.log(educations);
-        return (
-            <ul>
-                {educations}
-            </ul>
-        )
-    }
-}
-// end::employee-list[]
-
-// tag::employee[]
-class Education extends React.Component{
-    render() {
-        console.log(this);
-        var structureElements = getStructureElements(this.props.education.structure);
-        return (
-            <li>
-                <ul>
-                    <li>{this.props.education.name.fi}</li>
-                    <li>{this.props.education.type}</li>
-                    <li>{this.props.education.id}</li>
-                    <li>
-                        <StructureList structures={this.props.education.structure}/>
-                    </li>
-                </ul>
-            </li>
-        )
-    }
-}
-
-class StructureList extends React.Component {
-    render() {
-        console.log("structure: ");
-        console.log(this);
-        var phases = getStructureElements(this.props.structures)
-        console.log(phases);
-        var structures = phases.map(ent => <Structure key={ent.key} elem={ent.data}/>);
-        return(<ul>
-            {structures}
-        </ul>)
-    }
-}
-
-class Structure extends React.Component {
-    render() {
-        var options = getModuleGroups(this.props.elem.options);
-        return(<ul>
-            <li>{this.props.elem.name.fi}</li>
-            {options}
-        </ul>)
-    }
-}
-
-class ModuleGroupList extends React.Component {
+class CourseList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {modules: []};
+        this.state = {courseNames: []}
     }
 
     componentDidMount() {
-        console.log("Mounting module");
-        console.log(this);
-        client({method: 'GET', path: '/api/by_group_id/' + this.props.groupId}).done(response => {
-            this.setState({modules: response.entity});
-        });
-
+        if (this.props.ids != null && this.props.ids.length > 0) {
+            fetch('/api/cu/names', {
+                method: 'post',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(this.props.ids)
+            }).then((response) => response.json()).then(responseJson => {
+                this.setState({courseNames: responseJson});
+            });
+        }
     }
 
-    render() {
 
-        var modules = this.state.modules.map(module =>
-            <Module key={module.id} module={module}/>
-        );
+    render() {
+        var courseNames = this.state.courseNames.map((name, index) => <li key={index + "" + name.fi}>{name.fi}</li>);
         return (
             <ul>
-                <li>mg</li>
-                {modules}
+                {courseNames}
             </ul>
         )
     }
 
-}
 
-class Module extends React.Component {
-
-    render() {
-        var subModules = getStructureElements(this.props.module.structure);
-        return (
-            <ul>
-                <li>{this.props.module.name.fi}</li>
-                <li>
-                    {subModules}
-                </li>
-            </ul>
-        )
-    }
-}
-
-function getStructureElements(elem) {
-    var phases = [];
-    for(var property in elem) {
-        if(property.startsWith("phase") && elem[property] != null)  {
-            phases.push({ key: property, data: elem[property]});
-        }
-    }
-    return phases;
-
-}
-
-
-function getModuleGroups(node) {
-    var elements = [];
-    if(node == null) {
-        return elements;
-    }
-    for(var i = 0; i < node.length; i++) {
-        var option = node[i];
-        elements.push(<ModuleGroupList key={option.localId} groupId={option.moduleGroupId}/>);
-    }
-    return elements;
-}
-
-function getRuleElements(node) {
-    var subElements = [];
-    if(node == null) {
-        return subElements;
-    }
-
-    if(node.type == 'ModuleRule') {
-        subElements.push(getSubElement(node));
-        return subElements;
-    }
-    if(node.type == 'CompositeRule') {
-        for(var i = 0; i < node.length; i++) {
-            var element = getSubElement(node[i]);
-            if(element != null) {
-                subElements.push(element);
-            }
-        }
-    }
-    return subElements;
-}
-
-function getSubElement(element) {
-    if(element == null) {
-        return null;
-    } else if(element.type == 'ModuleRule') {
-        return <ModuleGroupList groupId={element.moduleGroupId}/>
-    }
 }
 
 // tag::render[]

@@ -1,4 +1,4 @@
-package fi.helsinki.eduview.controller;
+package fi.helsinki.eduview.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
@@ -17,7 +19,7 @@ import java.util.*;
  * @date: 04/01/2018
  */
 @Service
-public class JsonService {
+public class StudyStructureService extends AbstractService {
 
     private boolean init = false;
     private ObjectMapper mapper = new ObjectMapper();
@@ -34,8 +36,10 @@ public class JsonService {
         for(File file : new File("test/").listFiles()) {
             if(file.getName().contains("educations")) {
                 root = educations;
-            } else {
+            } else if(file.getName().contains("module")){
                 root = modules;
+            } else {
+                continue;
             }
             ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
             for(JsonNode child : fileTree) {
@@ -55,7 +59,7 @@ public class JsonService {
 //        if(subNode != null) {
 //            array.addAll((ArrayNode)subNode);
 //        }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(array);
+        return filterResultsByLvAndPrint(array);
     }
 
     public String getEducations() throws IOException {
@@ -73,7 +77,7 @@ public class JsonService {
     public String getById(String id) throws Exception {
         JsonNode response = findFromAllById(id);
         if(response != null) {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            return filterResultsByLvAndPrint(response);
         }
         return null;
     }
@@ -105,6 +109,7 @@ public class JsonService {
         return null;
     }
 
+    // note: traverse uses only rules and tries to play with ids instead of just working with groupids, needs to be fixed
     public String traverseTree(String id) throws Exception {
         Set<String> unfetchedIds = new TreeSet<>();
         List<JsonNode> results = new ArrayList<>();
@@ -139,7 +144,7 @@ public class JsonService {
         });
         ArrayNode resultNode = mapper.createArrayNode();
         resultNode.addAll(results);
-        return mapper.writeValueAsString(resultNode);
+        return filterResultsByLvAndPrint(resultNode);
     }
 
     private void traverse(List<JsonNode> results, List<JsonNode> array, Set<String> idsToCheck, List<String> order) {
@@ -194,9 +199,9 @@ public class JsonService {
         return newIds;
     }
 
-    public String getByGroupId(String groupId) throws JsonProcessingException {
+    public String getByGroupId(String groupId) throws IOException {
         ArrayNode moduleResults = findByGroupId(groupId);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleResults);
+        return filterResultsByLvAndPrint(moduleResults);
     }
 
     private ArrayNode findByGroupId(String groupId) {
@@ -212,11 +217,17 @@ public class JsonService {
         return moduleResults;
     }
 
-    public String getByAllIds(List<String> idList) throws JsonProcessingException {
+    public String getByAllIds(List<String> idList) throws IOException {
         ArrayNode results = mapper.createArrayNode();
         for(String id : idList) {
             results.addAll(findByGroupId(id));
         }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(results);
+        return filterResultsByLvAndPrint(results);
+    }
+
+    public String getAvailableLVs() throws JsonProcessingException {
+        ArrayNode node = mapper.createArrayNode();
+        node.add("curriculumPeriodIds");
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     }
 }
