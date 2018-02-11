@@ -24,42 +24,24 @@ class App extends React.Component {
 
     onChangeEd(event) {
         console.log("fetching lvs");
-        this.updateEducation(event.target.value);
-    }
-
-    updateEducation(educationId) {
-        if(educationId != null && this.state.education != null && this.state.education['id'] == educationId) {
-            return;
-        }
-        if(educationId != null) {
-            this.setState({lv: undefined});
-            client({method: 'GET', path: '/api/available_lvs/' + educationId}).done(response => {
-                this.setState({lvs: response.entity});
-                console.log("first entity: " + response.entity[0]);
-                this.setState({lv: response.entity[0]})
-            });
-        }
-        if(educationId == null) {
-            educationId = this.state.education['id'];
-            console.log("educationId now: ");
-            console.log(educationId);
-        }
-        client({method: 'GET', path: '/api/by_id/' + educationId + "?lv=" + (this.state.lv == undefined ? null : this.state.lv)}).done(response => {
+        client({method: 'GET', path: '/api/available_lvs/' + event.target.value}).done(response => {
+            this.setState({lvs: response.entity, lv: response.entity[0]});
+            document.getElementById("lv").value = response.entity[0];
+        });
+        client({method: 'GET', path: '/api/by_id/' + event.target.value + "?lv=" + this.state.lv}).done(response => {
             this.setState({education: response.entity});
         });
     }
 
     onChangeLv(event) {
         this.setState({lv: event.target.value});
-        this.updateEducation();
-/*
-        client({metdhod: 'GET', path: '/api/update_lv/' + event.target.value}).done(response => {
-
+        client({method: 'GET', path: '/api/by_id/' + this.state.education.id + "?lv=" + event.target.value}).done(response => {
+            this.setState({education: response.entity});
         });
-*/
     }
 
     render() {
+        console.log("rendering education");
         var educationOptions = this.state.educations.map(ed =>
             <option key={ed.id} value={ed.id}>{ed.name.fi}</option>
         );
@@ -86,8 +68,8 @@ class App extends React.Component {
                         </select>
                     </li>
                 }
-                <li>Educations</li>
-                {this.state.lv != undefined && <Element key={this.state.education.id} elem={this.state.education} lv={this.state.lv}/>}
+                <li>Education</li>
+                {this.state.lv != undefined && <Element key={this.state.education.id} id={this.state.education.id} elem={this.state.education} lv={this.state.lv}/>}
             </ul>
         )
     }
@@ -97,7 +79,7 @@ class ElementList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {elements: [], lv: props.lv}
+        this.state = {elements: []}
     }
 
     componentDidMount() {
@@ -113,34 +95,32 @@ class ElementList extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if(arraysEqual(this.props.ids, nextProps.ids)) {
+        //console.log("elementlist " + this.props.id + " received new props");
+        //console.log(nextProps);
+        //console.log(this.props);
+
+        if(isEqual(this.props, nextProps)) {
+            //console.log("elementlist " + this.props.id + " arrays are equal, do nothing");
             return;
         }
-        if (nextProps.ids != null && nextProps.ids.length > 0) {
-            fetch('/api/all_ids?lv=' + (nextProps.lv == undefined ? '' : nextProps.lv), {
-                method: 'post',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(nextProps.ids)
-            }).then((response) => response.json()).then(responseJson => {
-                this.setState({elements: responseJson});
-            });
-        }
+        //console.log("elementlist " + this.props.id + " arrays not equal, get new with lv " + nextProps.lv);
+
+        fetch('/api/all_ids?lv=' + (nextProps.lv == undefined ? '' : nextProps.lv), {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(nextProps.ids)
+        }).then((response) => response.json()).then(responseJson => {
+            this.setState({elements: responseJson});
+        });
     }
 
 
     componentDidUpdate() {
-        if(this.props.elements != null && this.state.elements.length == 0) {
-            console.log("elements updated");
-            this.setState({elements: this.props.elements});
-        }
-        if(this.props.lv != this.state.lv) {
-            this.setState({lv: this.props.lv})
-        }
     }
 
     render() {
         var elements = this.state.elements.map(elem =>
-            <Element key={elem.id} elem={elem} lv={this.state.lv}/>);
+            <Element key={elem.id} id={elem.id} elem={elem} lv={this.props.lv}/>);
         return (
             <li>
                 id: {this.props.id}
@@ -152,8 +132,14 @@ class ElementList extends React.Component {
 
 class Element extends React.Component {
 
+    componentWillReceiveProps(nextProps) {
+        console.log("element " + this.props.id + " received updated properties");
+        console.log(nextProps);
+        console.log(this.props);
+    }
+
     componentDidUpdate() {
-        console.log("element updated: " + this.props.elem.id);
+        console.log("element updated: " + this.props.elem.id + ", lv: " + this.props.lv);
     }
 
     render() {
@@ -181,7 +167,7 @@ class Element extends React.Component {
 
     renderEducation(elem) {
 
-        var structure = getElementStructure(elem.structure);
+        var structure = getElementStructure(elem.structure, this.props.lv);
         console.log("stucture");
         console.log(structure);
 
@@ -204,7 +190,7 @@ class Element extends React.Component {
                 <li><b>{elem.name.fi}</b></li>
                 <li>id: {elem.id}</li>
                 <li>{elem.type}</li>
-                {elem.targetCredits != null && <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>}
+                {elem.targetCredits != null && <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li>}
                 {rules.modules.length > 0 &&
                 <li>
                     Osat:<br/>
@@ -284,19 +270,67 @@ class Element extends React.Component {
 
 }
 
-function arraysEqual(a, b) {
-    if (a === b) return true;
-    if (a == null || b == null) return false;
-    if (a.length != b.length) return false;
+function isEqual(value, other) {
 
-    // If you don't care about the order of the elements inside
-    // the array, you should sort both arrays here.
+    // Get the value type
+    var type = Object.prototype.toString.call(value);
 
-    for (var i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) return false;
+    // If the two objects are not the same type, return false
+    if (type !== Object.prototype.toString.call(other)) return false;
+
+    // If items are not an object or array, return false
+    if (['[object Array]', '[object Object]'].indexOf(type) < 0) return false;
+
+    // Compare the length of the length of the two items
+    var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
+    var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
+    if (valueLen !== otherLen) return false;
+
+    // Compare two items
+    var compare = function (item1, item2) {
+
+        // Get the object type
+        var itemType = Object.prototype.toString.call(item1);
+
+        // If an object or array, compare recursively
+        if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0) {
+            if (!isEqual(item1, item2)) return false;
+        }
+
+        // Otherwise, do a simple comparison
+        else {
+
+            // If the two items are not the same type, return false
+            if (itemType !== Object.prototype.toString.call(item2)) return false;
+
+            // Else if it's a function, convert to a string and compare
+            // Otherwise, just compare
+            if (itemType === '[object Function]') {
+                if (item1.toString() !== item2.toString()) return false;
+            } else {
+                if (item1 !== item2) return false;
+            }
+
+        }
+    };
+
+    // Compare properties
+    if (type === '[object Array]') {
+        for (var i = 0; i < valueLen; i++) {
+            if (compare(value[i], other[i]) === false) return false;
+        }
+    } else {
+        for (var key in value) {
+            if (value.hasOwnProperty(key)) {
+                if (compare(value[key], other[key]) === false) return false;
+            }
+        }
     }
+
+    // If nothing failed, return true
     return true;
-}
+
+};
 
 function parseRule(rule) {
     var modules = [];
@@ -344,7 +378,7 @@ function getRules(rule) {
     return rules;
 }
 
-function getElementStructure(struct) {
+function getElementStructure(struct, lv) {
     var structures = [];
     for(var property in struct) {
         if(property.startsWith("phase") && struct[property] != null)  {
@@ -355,7 +389,7 @@ function getElementStructure(struct) {
             }
             structures.push(<ul key={property}>
                 <li>{phase.name.fi}</li>
-                <li><ElementList key={'opt-' + property} id={'opt-' + property} ids={options}/></li>
+                <li><ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv}/></li>
             </ul>)
         }
     }
@@ -383,18 +417,16 @@ class CourseList extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if(arraysEqual(this.props, nextProps)) {
+        if(isEqual(this.props, nextProps)) {
             return;
         }
-        if (nextProps.ids != null && nextProps.ids.length > 0) {
-            fetch('/api/cu/names?lv=' + (this.props.lv != undefined ? this.props.lv : ''), {
-                method: 'post',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(nextProps.ids)
-            }).then((response) => response.json()).then(responseJson => {
-                this.setState({courseNames: responseJson});
-            });
-        }
+        fetch('/api/cu/names?lv=' + this.props.lv, {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(nextProps.ids)
+        }).then((response) => response.json()).then(responseJson => {
+            this.setState({courseNames: responseJson});
+        });
     }
 
 

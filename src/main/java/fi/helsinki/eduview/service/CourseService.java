@@ -32,15 +32,15 @@ public class CourseService extends AbstractService {
         }
         ObjectMapper mapper = new ObjectMapper();
         List<JsonNode> root = cus;
-//        for(File file : new File("test/").listFiles()) {
-//            if(!file.getName().contains("course-units")) {
-//                continue;
-//            }
-//            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
-//            for(JsonNode child : fileTree) {
-//                root.add(child);
-//            }
-//        }
+        for(File file : new File("test/").listFiles()) {
+            if(!file.getName().contains("course-units")) {
+                continue;
+            }
+            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
+            for(JsonNode child : fileTree) {
+                root.add(child);
+            }
+        }
         init = true;
     }
 
