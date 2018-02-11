@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
@@ -59,7 +58,7 @@ public class StudyStructureService extends AbstractService {
 //        if(subNode != null) {
 //            array.addAll((ArrayNode)subNode);
 //        }
-        return filterResultsByLvAndPrint(array);
+        return filterResultsByLvAndPrint(array, null);
     }
 
     public String getEducations() throws IOException {
@@ -74,10 +73,10 @@ public class StudyStructureService extends AbstractService {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
     }
 
-    public String getById(String id) throws Exception {
+    public String getById(String id, String lv) throws Exception {
         JsonNode response = findFromAllById(id);
         if(response != null) {
-            return filterResultsByLvAndPrint(response);
+            return filterResultsByLvAndPrint(response, lv);
         }
         return null;
     }
@@ -110,7 +109,12 @@ public class StudyStructureService extends AbstractService {
     }
 
     // note: traverse uses only rules and tries to play with ids instead of just working with groupids, needs to be fixed
-    public String traverseTree(String id) throws Exception {
+    public String traverseTree(String id, boolean filterTree) throws Exception {
+        ArrayNode resultNode = traverseTreeInternal(id);
+        return filterTree ? filterResultsByLvAndPrint(resultNode, null) : mapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultNode);
+    }
+
+    private ArrayNode traverseTreeInternal(String id) throws Exception {
         Set<String> unfetchedIds = new TreeSet<>();
         List<JsonNode> results = new ArrayList<>();
         final List<String> order = new ArrayList<>();
@@ -122,7 +126,7 @@ public class StudyStructureService extends AbstractService {
         if(node != null) {
             results.add(node);
             order.add(id);
-            List<String> newIds = handleNodeTraverse(node);
+            List<String> newIds = handleNodeRuleTraverse(node);
             order.addAll(order.indexOf(id)+1, newIds);
             unfetchedIds.addAll(newIds);
             traverse(results, modules, unfetchedIds, order);
@@ -144,7 +148,8 @@ public class StudyStructureService extends AbstractService {
         });
         ArrayNode resultNode = mapper.createArrayNode();
         resultNode.addAll(results);
-        return filterResultsByLvAndPrint(resultNode);
+
+        return resultNode;
     }
 
     private void traverse(List<JsonNode> results, List<JsonNode> array, Set<String> idsToCheck, List<String> order) {
@@ -163,14 +168,14 @@ public class StudyStructureService extends AbstractService {
                 if(idsToCheck.contains(id)) {
                     results.add(mod);
                     found++;
-                    newLocalIds = handleNodeTraverse(mod);
+                    newLocalIds = handleNodeRuleTraverse(mod);
                     order.addAll(order.indexOf(id) + 1, newLocalIds);
                     idsToCheck.remove(id);
 
                 } else if(idsToCheck.contains(groupId)) {
                     results.add(mod);
                     found++;
-                    newLocalIds = handleNodeTraverse(mod);
+                    newLocalIds = handleNodeRuleTraverse(mod);
                     order.add(order.indexOf(groupId)+1, id);
                     order.addAll(order.indexOf(id)+1, newLocalIds);
                 }
@@ -186,14 +191,23 @@ public class StudyStructureService extends AbstractService {
         }
     }
 
-    private List<String> handleNodeTraverse(JsonNode node) {
+    private List<String> handleNodeRuleTraverse(JsonNode node) {
         List<String> newIds = new ArrayList<>();
-        if(!node.has("rule") || !node.get("rule").has("rules")) {
+        if(!node.has("rule")) {
             return newIds;
         }
-        for(JsonNode rule : node.get("rule").get("rules")) {
-            if(rule.has("moduleGroupId")) {
-                newIds.add(rule.get("moduleGroupId").asText());
+        newIds.addAll(readRules(node.get("rule")));
+        return newIds;
+    }
+
+    private List<String> readRules(JsonNode ruleNode) {
+        List<String> newIds = new ArrayList<>();
+        if(ruleNode.has("moduleGroupId")) {
+            newIds.add(ruleNode.get("moduleGroupId").asText());
+        }
+        if(ruleNode.has("rules")) {
+            for (JsonNode rule : ruleNode.get("rules")) {
+                newIds.addAll(readRules(rule));
             }
         }
         return newIds;
@@ -201,7 +215,7 @@ public class StudyStructureService extends AbstractService {
 
     public String getByGroupId(String groupId) throws IOException {
         ArrayNode moduleResults = findByGroupId(groupId);
-        return filterResultsByLvAndPrint(moduleResults);
+        return filterResultsByLvAndPrint(moduleResults, null);
     }
 
     private ArrayNode findByGroupId(String groupId) {
@@ -217,17 +231,44 @@ public class StudyStructureService extends AbstractService {
         return moduleResults;
     }
 
-    public String getByAllIds(List<String> idList) throws IOException {
+    public String getByAllIds(List<String> idList, String lv) throws IOException {
         ArrayNode results = mapper.createArrayNode();
         for(String id : idList) {
             results.addAll(findByGroupId(id));
         }
-        return filterResultsByLvAndPrint(results);
+        return filterResultsByLvAndPrint(results, lv);
+    }
+
+    public String getAvailableLVs(String id) throws Exception {
+        ArrayNode tree = traverseTreeInternal(id);
+        ArrayNode node = mapper.createArrayNode();
+        Set<String> lvs = new TreeSet<>();
+        for(JsonNode mod : tree) {
+            if(mod.has("curriculumPeriodIds")) {
+                for(JsonNode lv : mod.get("curriculumPeriodIds")) {
+                    lvs.add(lv.asText());
+                }
+            }
+        }
+        for(String lv : lvs) {
+            node.add(new TextNode(lv));
+        }
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     }
 
     public String getAvailableLVs() throws JsonProcessingException {
         ArrayNode node = mapper.createArrayNode();
-        node.add("curriculumPeriodIds");
+        Set<String> lvs = new TreeSet<>();
+        for(JsonNode mod : modules) {
+            if(mod.has("curriculumPeriodIds")) {
+                for(JsonNode lv : mod.get("curriculumPeriodIds")) {
+                    lvs.add(lv.asText());
+                }
+            }
+        }
+        for(String lv : lvs) {
+            node.add(new TextNode(lv));
+        }
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     }
 }

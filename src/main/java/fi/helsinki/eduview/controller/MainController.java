@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import fi.helsinki.eduview.service.CourseService;
 import fi.helsinki.eduview.service.StudyStructureService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestAttributes;
@@ -28,22 +29,21 @@ public class MainController {
     private CourseService courseService;
 
     @RequestMapping(value = "/api/update_lv/{lv}", produces = "application/json; charset=utf-8")
-    @ResponseBody
-    public String updateLv(@PathVariable String lv) {
+    @ResponseStatus(HttpStatus.OK)
+    public void updateLv(@PathVariable String lv) {
         RequestContextHolder.getRequestAttributes().setAttribute("lv", lv, RequestAttributes.SCOPE_SESSION);
-        return "ok";
     }
 
-    @RequestMapping(value = "/api/available_lvs", produces = "application/json; charset=utf-8")
+    @RequestMapping(value = "/api/available_lvs/{educationId}", produces = "application/json; charset=utf-8")
     @ResponseBody
-    public String availbleLV() throws IOException {
-        return studyService.getAvailableLVs();
+    public String availbleLV(@PathVariable String educationId) throws Exception {
+        return studyService.getAvailableLVs(educationId);
     }
 
     @RequestMapping(value = "/api/educations", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getEducations() throws Exception {
-        return studyService.getEducations();
+         return studyService.getEducations();
     }
 
     @RequestMapping(value = "/api/by_group_id/{groupId}", produces = "application/json; charset=utf-8")
@@ -54,22 +54,22 @@ public class MainController {
 
     @RequestMapping(value = "/api/by_id/{id}", produces = "application/json; charset=utf-8")
     @ResponseBody
-    public String getStructureById(@PathVariable String id) throws Exception {
-        return studyService.getById(id);
+    public String getStructureById(@PathVariable String id, @RequestParam(required = false) String lv) throws Exception {
+        return studyService.getById(id, lv);
     }
 
     @RequestMapping(value = "/api/all_ids", produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     @ResponseBody
-    public String getByAllIds(@RequestBody String ids) throws IOException {
+    public String getByAllIds(@RequestBody String ids, @RequestParam(required = false) String lv) throws IOException {
         List<String> idList = parseIds(ids);
-        return studyService.getByAllIds(idList);
+        return studyService.getByAllIds(idList, lv);
     }
 
     @RequestMapping(value = "/api/cu/names", produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     @ResponseBody
-    public String getCUNames(@RequestBody String ids) throws IOException {
+    public String getCUNames(@RequestBody String ids, @RequestParam(required = false) String lv) throws IOException {
         List<String> idList = parseIds(ids);
-        return courseService.getCUNamesByIds(idList);
+        return courseService.getCUNamesByIds(idList, lv);
     }
 
     private List<String> parseIds(String ids) throws IOException {
@@ -94,6 +94,6 @@ public class MainController {
     @RequestMapping(value = "/api/rule/tree/{id}", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getRuleTree(@PathVariable String id) throws Exception {
-        return studyService.traverseTree(id);
+        return studyService.traverseTree(id, true);
     }
 }

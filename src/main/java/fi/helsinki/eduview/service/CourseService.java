@@ -32,26 +32,26 @@ public class CourseService extends AbstractService {
         }
         ObjectMapper mapper = new ObjectMapper();
         List<JsonNode> root = cus;
-        for(File file : new File("test/").listFiles()) {
-            if(!file.getName().contains("course-units")) {
-                continue;
-            }
-            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
-            for(JsonNode child : fileTree) {
-                root.add(child);
-            }
-        }
+//        for(File file : new File("test/").listFiles()) {
+//            if(!file.getName().contains("course-units")) {
+//                continue;
+//            }
+//            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
+//            for(JsonNode child : fileTree) {
+//                root.add(child);
+//            }
+//        }
         init = true;
     }
 
-    public String getCUNamesByIds(List<String> idList) throws IOException {
+    public String getCUNamesByIds(List<String> idList, String lv) throws IOException {
         ArrayNode array = mapper.createArrayNode();
         for(JsonNode cu : cus) {
             if(idList.contains(cu.get("groupId").asText())) {
                 array.add(cu);
             }
         }
-        JsonNode filtered = filterResultsByLv(array);
+        JsonNode filtered = filterResultsByLv(array, lv);
         array = mapper.createArrayNode();
         for(JsonNode cu : filtered) {
             array.add(cu.get("name"));

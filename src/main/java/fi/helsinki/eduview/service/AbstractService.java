@@ -32,19 +32,23 @@ public abstract class AbstractService {
         return mapper.createObjectNode();
     }
 
-    protected JsonNode filterResultsByLv(JsonNode results) throws JsonProcessingException {
+    protected JsonNode filterResultsByLv(JsonNode results, String lv) throws JsonProcessingException {
         if(results.isObject()) {
             return filterResultByLv(results);
         }
         ArrayNode filteredResults = mapper.createArrayNode();
-        String lv = "hy-lv-70";
-        if(lv == null) {
+
+        if(lv == null || lv.isEmpty()) {
             return results;
         }
+
         for(JsonNode node : results) {
             if(!node.has("curriculumPeriodIds")) {
                 filteredResults.add(node);
                 continue;
+            }
+            if(node.get("curriculumPeriodIds").size() == 0) {
+                filteredResults.add(node);
             }
             for(JsonNode lvNode : node.get("curriculumPeriodIds")) {
                 if(lvNode.asText().equals(lv)) {
@@ -56,8 +60,8 @@ public abstract class AbstractService {
         return filteredResults;
     }
 
-    protected String filterResultsByLvAndPrint(JsonNode results) throws IOException {
-        JsonNode result = filterResultsByLv(results);
+    protected String filterResultsByLvAndPrint(JsonNode results, String lv) throws IOException {
+        JsonNode result = filterResultsByLv(results, lv);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
     }
 
