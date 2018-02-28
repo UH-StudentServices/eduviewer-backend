@@ -431,7 +431,10 @@ class CourseList extends React.Component {
 
 
     render() {
-        var courseNames = this.state.courseNames.map((name, index) => <li key={index + "" + name.fi}>{name.fi}</li>);
+        var courseNames = this.state.courseNames.map((node, index) => <li key={index + "" + node.name.fi}>{node.name.fi}&nbsp;
+            ({(node.credits.min == node.credits.max) ?
+                (<b>{node.credits.min}</b>) :
+                (<b>{node.credits.min}-{node.credits.max}</b>)}op)</li>);
         return (
             <ul>
                 {courseNames}
