@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -17,6 +19,8 @@ import java.io.IOException;
 @Service
 public abstract class AbstractService {
 
+    @Autowired
+    protected Environment env;
     protected ObjectMapper mapper = new ObjectMapper();
 
     private JsonNode filterResultByLv(JsonNode response) throws JsonProcessingException {

@@ -190,7 +190,7 @@ class Element extends React.Component {
                 <li><b>{elem.name.fi}</b></li>
                 <li>id: {elem.id}</li>
                 <li>{elem.type}</li>
-                {elem.targetCredits != null && <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li>}
+                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li> : <li>Opintopisteet {elem.targetCredits.max}</li>)}
                 {rules.modules.length > 0 &&
                 <li>
                     Osat:<br/>
@@ -200,7 +200,7 @@ class Element extends React.Component {
                 </li>}
                 {rules.courses.length > 0 &&
                     <li>
-                        Kurssit: <br/>
+                        Opintojaksot<br/>
                         <CourseList key={'cu-' + elem.id} ids={rules.courses} lv={this.props.lv}/>
                     </li>
                 }
@@ -261,7 +261,7 @@ class Element extends React.Component {
     //                </ul>
     //            </li>}
     //            <li>
-    //                Kurssit: <br/>
+    //                Opintojaksot: <br/>
     //                {rules.courses}
     //            </li>
     //        </ul>

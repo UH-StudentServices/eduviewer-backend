@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -25,6 +27,7 @@ public class CourseService extends AbstractService {
     private List<JsonNode> cus = new ArrayList<>();
 
 
+
     @PostConstruct
     private void init() throws IOException {
         if(init) {
@@ -32,8 +35,9 @@ public class CourseService extends AbstractService {
         }
         ObjectMapper mapper = new ObjectMapper();
         List<JsonNode> root = cus;
-        for(File file : new File("test/").listFiles()) {
-            if(!file.getName().contains("course-units")) {
+        String courseUnitsFileName = env.getProperty("course-units", "course-units");
+        for(File file : new File(env.getProperty("data-location", "backup/")).listFiles()) {
+            if(!file.getName().contains(courseUnitsFileName)) {
                 continue;
             }
             ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));

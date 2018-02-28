@@ -32,10 +32,13 @@ public class StudyStructureService extends AbstractService {
         }
         ObjectMapper mapper = new ObjectMapper();
         List<JsonNode> root;
-        for(File file : new File("test/").listFiles()) {
-            if(file.getName().contains("educations")) {
+        String educationsFN = env.getProperty("educations", "educations");
+        String dataLocation = env.getProperty("data-location", "backup/");
+        String modulesFN = env.getProperty("modules", "modules");
+        for(File file : new File(dataLocation).listFiles()) {
+            if(file.getName().contains(educationsFN)) {
                 root = educations;
-            } else if(file.getName().contains("module")){
+            } else if(file.getName().contains(modulesFN)){
                 root = modules;
             } else {
                 continue;
