@@ -24,11 +24,15 @@ class App extends React.Component {
 
     onChangeEd(event) {
         console.log("fetching lvs");
+        this.setState({lvs: [], lv: ''});
         client({method: 'GET', path: '/api/available_lvs/' + event.target.value}).done(response => {
             this.setState({lvs: response.entity, lv: response.entity[0]});
             document.getElementById("lv").value = response.entity[0];
         });
-        client({method: 'GET', path: '/api/by_id/' + event.target.value + "?lv=" + this.state.lv}).done(response => {
+        client({
+            method: 'GET',
+            path: '/api/by_id/' + event.target.value + "?lv=" + this.state.lv
+        }).done(response => {
             this.setState({education: response.entity});
         });
     }
