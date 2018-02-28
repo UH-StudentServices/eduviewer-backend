@@ -1,5 +1,6 @@
 package fi.helsinki.eduview.service;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,24 +32,33 @@ public class StudyStructureService extends AbstractService {
            return;
         }
         ObjectMapper mapper = new ObjectMapper();
-        List<JsonNode> root;
-        String educationsFN = env.getProperty("educations", "educations");
         String dataLocation = env.getProperty("data-location", "backup/");
-        String modulesFN = env.getProperty("modules", "modules");
-        for(File file : new File(dataLocation).listFiles()) {
-            if(file.getName().contains(educationsFN)) {
-                root = educations;
-            } else if(file.getName().contains(modulesFN)){
-                root = modules;
-            } else {
-                continue;
-            }
-            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
-            for(JsonNode child : fileTree) {
-                root.add(child);
-            }
-        }
+        String educationsFN = env.getProperty("educations-dir", "kori-educations");
+        String modulesFN = env.getProperty("modules-dir", "kori-modules");
+        String degreeProgrammesFN = env.getProperty("degree-programmes-dir", "kori-degree-programmes");
+        initFiles(mapper, dataLocation + educationsFN, educations);
+        initFiles(mapper, dataLocation + modulesFN, modules);
+        initFiles(mapper, dataLocation + degreeProgrammesFN, modules);
         init = true;
+    }
+
+    private void initFiles(ObjectMapper mapper, String dir, List<JsonNode> list) throws IOException {
+        for (File file : new File(dir).listFiles()) {
+            try {
+                JsonNode root = mapper.readTree(Files.readAllBytes(file.toPath()));
+                if (root.isArray()) {
+                    for (JsonNode childNode : root) {
+                        list.add(childNode);
+                    }
+                } else {
+                    list.add(root);
+                }
+            }
+                catch(JsonParseException e) {
+                    System.out.println("wtf");
+                }
+        }
+
     }
 
     public String getNodesById(String id) throws Exception {
@@ -95,8 +105,10 @@ public class StudyStructureService extends AbstractService {
     private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList) {
         ArrayNode array = mapper.createArrayNode();
         for(JsonNode child : nodeList) {
-            if (child.get("groupId").asText().equals(id) && child.get("documentState").asText().equals("ACTIVE")) {
-                array.add(child);
+            if (child.get("groupId").asText().equals(id)) {
+//                if(child.get("documentState").asText().equals("ACTIVE")) {
+                    array.add(child);
+//                }
             }
         }
         return array;

@@ -193,7 +193,7 @@ class Element extends React.Component {
                 {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li> : <li>Opintopisteet {elem.targetCredits.max}</li>)}
                 {rules.modules.length > 0 &&
                 <li>
-                    Osat:<br/>
+                    Osat<br/>
                     <ul>
                         <ElementList key={'mods-' + elem.id} id={'mods-' + elem.id} ids={rules.modules} lv={this.props.lv}/>
                     </ul>

@@ -30,21 +30,21 @@ public class CourseService extends AbstractService {
 
     @PostConstruct
     private void init() throws IOException {
-        if(init) {
-            return;
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        List<JsonNode> root = cus;
-        String courseUnitsFileName = env.getProperty("course-units", "course-units");
-        for(File file : new File(env.getProperty("data-location", "backup/")).listFiles()) {
-            if(!file.getName().contains(courseUnitsFileName)) {
-                continue;
-            }
-            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
-            for(JsonNode child : fileTree) {
-                root.add(child);
-            }
-        }
+//        if(init) {
+//            return;
+//        }
+//        ObjectMapper mapper = new ObjectMapper();
+//        List<JsonNode> root = cus;
+//        String courseUnitsFileName = env.getProperty("course-units", "course-units");
+//        for(File file : new File(env.getProperty("data-location", "backup/")).listFiles()) {
+//            if(!file.getName().contains(courseUnitsFileName)) {
+//                continue;
+//            }
+//            ArrayNode fileTree = (ArrayNode)mapper.readTree(Files.readAllBytes(file.toPath()));
+//            for(JsonNode child : fileTree) {
+//                root.add(child);
+//            }
+//        }
         init = true;
     }
 
