@@ -43,7 +43,7 @@ public abstract class AbstractService {
         ArrayNode filteredResults = mapper.createArrayNode();
 
         if(lv == null || lv.isEmpty()) {
-            return results;
+            return filteredResults;
         }
 
         for(JsonNode node : results) {

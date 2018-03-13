@@ -35,11 +35,40 @@ public class StudyStructureService extends AbstractService {
         String dataLocation = env.getProperty("data-location", "backup/");
         String educationsFN = env.getProperty("educations-dir", "kori-educations");
         String modulesFN = env.getProperty("modules-dir", "kori-modules");
-        String degreeProgrammesFN = env.getProperty("degree-programmes-dir", "kori-degree-programmes");
-        initFiles(mapper, dataLocation + educationsFN, educations);
-        initFiles(mapper, dataLocation + modulesFN, modules);
-        initFiles(mapper, dataLocation + degreeProgrammesFN, modules);
+//        String degreeProgrammesFN = env.getProperty("degree-programmes-dir", "kori-degree-programmes");
+//        initFiles(mapper, dataLocation + educationsFN, educations);
+//        initFiles(mapper, dataLocation + modulesFN, modules);
+//        initFiles(mapper, dataLocation + degreeProgrammesFN, modules);
+        initAllFilesFromSameDirectory(mapper, dataLocation + educationsFN);
+        initAllFilesFromSameDirectory(mapper, dataLocation + modulesFN);
         init = true;
+    }
+
+    private void initAllFilesFromSameDirectory(ObjectMapper mapper, String dir) throws IOException {
+        for (File file : new File(dir).listFiles()) {
+            try {
+                JsonNode root = mapper.readTree(Files.readAllBytes(file.toPath()));
+                if (root.isArray()) {
+                    for (JsonNode childNode : root) {
+                        initToCorrectCollection(childNode);
+                    }
+                } else {
+                    initToCorrectCollection(root);
+                }
+            }
+            catch(JsonParseException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("done");
+    }
+
+    private void initToCorrectCollection(JsonNode childNode) {
+        if(childNode.get("type").asText().toLowerCase().contains("education")) {
+            educations.add(childNode);
+        } else {
+            modules.add(childNode);
+        }
     }
 
     private void initFiles(ObjectMapper mapper, String dir, List<JsonNode> list) throws IOException {

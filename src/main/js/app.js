@@ -61,17 +61,16 @@ class App extends React.Component {
         return (
             <ul>
                 <li>
+                    <select id="lv" name="lv" onChange={this.onChangeLv}>
+                        <option value="">---</option>
+                        {options}
+                    </select>
+                </li>
+                <li>
                     <select id="ed" name="ed" onChange={this.onChangeEd}>
                         {educationOptions}
                     </select>
                 </li>
-                {this.state.lvs.length > 0 &&
-                    <li>
-                        <select id="lv" name="lv" onChange={this.onChangeLv}>
-                            {options}
-                        </select>
-                    </li>
-                }
                 <li>Education</li>
                 {this.state.lv != undefined && <Element key={this.state.education.id} id={this.state.education.id} elem={this.state.education} lv={this.state.lv}/>}
             </ul>
@@ -99,16 +98,9 @@ class ElementList extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        //console.log("elementlist " + this.props.id + " received new props");
-        //console.log(nextProps);
-        //console.log(this.props);
-
         if(isEqual(this.props, nextProps)) {
-            //console.log("elementlist " + this.props.id + " arrays are equal, do nothing");
             return;
         }
-        //console.log("elementlist " + this.props.id + " arrays not equal, get new with lv " + nextProps.lv);
-
         fetch('/api/all_ids?lv=' + (nextProps.lv == undefined ? '' : nextProps.lv), {
             method: 'post',
             headers: {'Content-Type': 'application/json'},
@@ -170,7 +162,6 @@ class Element extends React.Component {
     }
 
     renderEducation(elem) {
-
         var structure = getElementStructure(elem.structure, this.props.lv);
         console.log("stucture");
         console.log(structure);
@@ -191,87 +182,155 @@ class Element extends React.Component {
         var rules = parseRule(elem.rule);
         return (
             <ul>
-                <li><b>{elem.name.fi}</b></li>
-                <li>id: {elem.id}</li>
-                <li>{elem.type}</li>
-                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li> : <li>Opintopisteet {elem.targetCredits.max}</li>)}
-                {rules.modules.length > 0 &&
-                <li>
-                    Osat<br/>
-                    <ul>
-                        <ElementList key={'mods-' + elem.id} id={'mods-' + elem.id} ids={rules.modules} lv={this.props.lv}/>
-                    </ul>
-                </li>}
-                {rules.courses.length > 0 &&
-                    <li>
-                        Opintojaksot<br/>
-                        <CourseList key={'cu-' + elem.id} ids={rules.courses} lv={this.props.lv}/>
-                    </li>
-                }
+                {this.renderElementHeader(elem)}
+                {this.renderRules(elem.rule)}
             </ul>
         )
     }
 
-    //renderDegreeProgramme(elem) {
-    //    var rules = parseRule(elem.rule);
-    //    console.log("groupingmodule: " + elem.id);
-    //    console.log(rules);
-    //    // parse elements from list
-    //    return (
-    //        <ul>
-    //            <li><b>{elem.name.fi}</b></li>
-    //            <li>{elem.type}</li>
-    //            <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
-    //            <li>
-    //                Osat:<br/>
-    //                <ul>
-    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
-    //                </ul>
-    //            </li>
-    //        </ul>
-    //    )
-    //}
-    //
-    //renderGroupingModule(elem) {
-    //    var rules = parseRule(elem.rule);
-    //    console.log("groupingmodule: " + elem.id)
-    //    console.log(rules);
-    //    return (
-    //        <ul>
-    //            <li><b>{elem.name.fi}</b></li>
-    //            <li>{elem.type}</li>
-    //            <li>
-    //                Osat:<br/>
-    //                <ul>
-    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
-    //                </ul>
-    //            </li>
-    //        </ul>
-    //    )
-    //}
-    //
-    //renderStudyModule(elem) {
-    //    var rules = parseRule(elem.rule);
-    //    return (
-    //        <ul>
-    //            <li><b>{elem.name.fi}</b></li>
-    //            <li>{elem.type}</li>
-    //            <li>Opintoviikot {elem.targetCredits.min} - {elem.targetCredits.max}</li>
-    //            {rules.modules.length > 0 &&
-    //                <li>
-    //                Osat:<br/>
-    //                <ul>
-    //                    <ElementList key={'mods-' + elem.id} ids={rules.modules}/>
-    //                </ul>
-    //            </li>}
-    //            <li>
-    //                Opintojaksot: <br/>
-    //                {rules.courses}
-    //            </li>
-    //        </ul>
-    //    )
-    //}
+    /*{rules.modules.length > 0 &&
+     <li>
+     Osat<br/>
+     <ul>
+     <ElementList key={'mods-' + elem.id} id={'mods-' + elem.id} ids={rules.modules} lv={this.props.lv} rule={elem.rule}/>
+     </ul>
+     </li>}
+     {rules.courses.length > 0 && elem.rule.require != null && elem.rule.require.min < rules.courses.length && <div>dropdown</div>}
+     {rules.courses.length > 0 && (elem.rule.require == null || elem.rule.require.min >= rules.courses.length) &&
+     <li>
+     Opintojaksot<br/>
+     <CourseList key={'cu-' + elem.id} ids={rules.courses} lv={this.props.lv}/>
+     </li>
+     }*/
 
+    renderElementHeader(elem) {
+        return (
+            <div>
+                <li><b>{elem.name.fi}</b></li>
+                <li>id: {elem.id}</li>
+                <li>{elem.type}</li>
+                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li> : <li>Opintopisteet {elem.targetCredits.max}</li>)}
+            </div>)
+    }
+
+    renderRules(elem) {
+        if(elem.type == 'CompositeRule') {
+            return (<CompositeRule key={elem.id} rule={elem} lv={this.props.lv}/>);
+        } else if(elem.type == 'CreditsRule') {
+            return (<CreditsRule key={elem.id} rule={elem} lv={this.props.lv}/>);
+        }
+    }
+}
+
+class CompositeRule extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.createMarkUp = this.createMarkUp.bind(this);
+    }
+
+    isModules(array) {
+        return array.length == 0 || array[0].type == 'ModuleRule';
+    }
+
+    createMarkUp() {
+        return {__html: this.props.rule.description.fi}
+    }
+
+    render() {
+        var rule = this.props.rule;
+        console.log(rule);
+        var rulesData = parseRule(rule);
+        if(this.isModules(rule.rules)) {
+            return (
+                <ul>
+                    {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
+                        <li>
+                            <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
+                        </li>
+                    }
+                    {rule.require != null && rule.require.min < rulesData.modules.length &&
+                        <li>
+                            <Dropdown key={'dd-' + rule.localId} rule={rule} ids={rulesData.modules} lv={this.props.lv}/>
+                        </li>
+                    }
+                    {rule.require == null &&
+                        <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
+                                 lv={this.props.lv} rule={rule}/>
+                    }
+                </ul>
+            )
+        } else {
+            return (
+                <li>
+                    Opintojaksot<br/>
+                    <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
+                </li>
+            )
+        }
+
+        return (
+            <li>
+
+            </li>
+        )
+    }
+}
+
+class CreditsRule extends React.Component {
+    render() {
+        return (
+            <ul>
+                <li>
+                    creditRule
+                </li>
+            </ul>
+        )
+    }
+}
+
+class Dropdown extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {selectedId: []};
+        this.onChange = this.onChange.bind(this);
+    }
+
+    onChange(event) {
+        this.setState({selectedId: [event.target.value]})
+    }
+
+
+    render() {
+        var options = this.props.ids.map(id =>
+            <option key={id} value={id}>{id}</option>
+        );
+
+        return (
+            <div>
+                <select onChange={this.onChange}>
+                    <option value="">---</option>
+                    {options}
+                </select>
+                <br/>
+                <ElementList key={'mods-' + this.props.rule.localId} id={'mods-' + this.props.rule.localId}
+                             ids={this.state.selectedId} lv={this.props.lv} rule={this.props.rule}/>
+            </div>
+
+        )
+    }
+}
+
+
+function isNotEmpty(html) {
+    var div = document.createElement("div");
+    div.innerHTML = html;
+    var text = div.textContent || div.innerText || "";
+    if(text == null || text.trim().length == 0) {
+        return false;
+    }
+    return true;
 }
 
 function isEqual(value, other) {
@@ -373,11 +432,11 @@ function getRules(rule) {
                 subModIds.push(sub.moduleGroupId);
             }
         }
-        rules.push(<li key={'l-' + rule.localId}><ElementList key={rule.localId} id={rule.localId} ids={subModIds}/></li>);
+        rules.push(<li key={'l-' + rule.localId}><ElementList key={rule.localId} id={rule.localId} ids={subModIds} rule={rule}/></li>);
     } else if(rule.type == 'ModuleRule') {
         var mods = [];
         mods.push(rule.moduleGroupId);
-        rules.push(<li key={'l-' + rule.localId}><ElementList key={rule.localId} id={rule.localId} ids={mods}/></li>);
+        rules.push(<li key={'l-' + rule.localId}><ElementList key={rule.localId} id={rule.localId} ids={mods} rule={rule}/></li>);
     }
     return rules;
 }
@@ -393,7 +452,7 @@ function getElementStructure(struct, lv) {
             }
             structures.push(<ul key={property}>
                 <li>{phase.name.fi}</li>
-                <li><ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv}/></li>
+                <li><ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}" /></li>
             </ul>)
         }
     }
@@ -438,7 +497,7 @@ class CourseList extends React.Component {
         var courseNames = this.state.courseNames.map((node, index) => <li key={index + "" + node.name.fi}>{node.name.fi}&nbsp;
             ({(node.credits.min == node.credits.max) ?
                 (<b>{node.credits.min}</b>) :
-                (<b>{node.credits.min}-{node.credits.max}</b>)}op)</li>);
+                (<b>{node.credits.min}-{node.credits.max}</b>)}<b>op</b>)</li>);
         return (
             <ul>
                 {courseNames}
