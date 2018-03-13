@@ -482,15 +482,18 @@ function getElementStructure(struct, lv) {
     var structures = [];
     for(var property in struct) {
         if(property.startsWith("phase") && struct[property] != null)  {
-            var phase = struct[property];
-            var options = [];
-            for(var i = 0; i < phase.options.length; i++) {
-                options.push(phase.options[i].moduleGroupId);
+            if(property.indexOf("phase1") >= 0
+                || qs['allPhases'] == 'true') {
+                var phase = struct[property];
+                var options = [];
+                for (var i = 0; i < phase.options.length; i++) {
+                    options.push(phase.options[i].moduleGroupId);
+                }
+                structures.push(<ul key={property}>
+                    <li>{phase.name.fi}</li>
+                    <ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}"/>
+                </ul>)
             }
-            structures.push(<ul key={property}>
-                <li>{phase.name.fi}</li>
-                <ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}" />
-            </ul>)
         }
     }
     return <ul>{structures}</ul>;
