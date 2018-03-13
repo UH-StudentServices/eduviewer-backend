@@ -194,7 +194,7 @@ class Element extends React.Component {
     }
 
     renderOtherTypes(elem) {
-        var rules = parseRule(elem.rule);
+        var rules = parseRuleData(elem.rule);
         return (
             <ul>
                 {this.renderElementHeader(elem)}
@@ -251,6 +251,7 @@ class CompositeRule extends React.Component {
     constructor(props) {
         super(props);
         this.createMarkUp = this.createMarkUp.bind(this);
+        this.renderModules = this.renderModules.bind(this);
     }
 
     isModules(array) {
@@ -261,42 +262,52 @@ class CompositeRule extends React.Component {
         return {__html: this.props.rule.description.fi}
     }
 
+    renderModules(rule, rulesData) {
+        return (<div>
+            {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
+            <li>
+                <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
+            </li>
+            }
+            {rule.require != null && rule.require.min < rulesData.modules.length &&
+            <li>
+                <Dropdown key={'dd-' + rule.localId} rule={rule} ids={rulesData.modules} lv={this.props.lv}/>
+            </li>
+            }
+            {rule.require == null &&
+            <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
+                         lv={this.props.lv} rule={rule}/>
+            }
+        </div>)
+    }
+
+    renderCourses(rule, rulesData) {
+        return (
+            <div>
+                <li> Opintojaksot </li>
+                <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
+            </div>
+        )
+    }
+
     render() {
         var rule = this.props.rule;
-        var rulesData = parseRule(rule);
-        if(this.isModules(rule.rules)) {
-            return (
-                <div>
-                    {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
-                        <li>
-                            <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
-                        </li>
-                    }
-                    {rule.require != null && rule.require.min < rulesData.modules.length &&
-                        <li>
-                            <Dropdown key={'dd-' + rule.localId} rule={rule} ids={rulesData.modules} lv={this.props.lv}/>
-                        </li>
-                    }
-                    {rule.require == null &&
-                        <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
-                                 lv={this.props.lv} rule={rule}/>
-                    }
-                </div>
-            )
+        var rulesData = parseRuleData(rule);
 
-            /*                     {
-             rule.allMandatory && <li><b>Kaikki opintojaksot ovat pakollisia</b></li>
-             }
-             */
-
-        } else {
-            return (
-                <div>
-                    <li> Opintojaksot </li>
-                    <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
-                </div>
-            )
+        if(rulesData.anyMR != null) {
+            console.log("anyrule was true");
+            console.log(rulesData);
         }
+
+        return (
+            <div>
+                {rulesData.courses.length > 0 && this.renderCourses(rule, rulesData)}
+                {rulesData.modules.length > 0 && this.renderModules(rule, rulesData)}
+                {rulesData.anyMR != null && <Rule key={rulesData.anyMR.localId} rule={rulesData.anyMR} lv={this.props.lv}/>}
+                {rulesData.anyCUR != null && <Rule key={rulesData.anyCUR.localId} rule={rulesData.anyCUR} lv={this.props.lv}/>}
+                {rulesData.creditsRules.length > 0 && <Rule key={rulesData.creditsRules[0].localId} rule={rulesData.creditsRules[0]} lv={this.props.lv}/>}
+            </div>
+        )
     }
 }
 
@@ -432,28 +443,49 @@ function isEqual(value, other) {
 
 };
 
-function parseRule(rule) {
+function parseRuleData(rule) {
     var modules = [];
     var courses = [];
+    var creditsRules = [];
+    var anyCUR = null;
+    var anyMR = null;
     var response;
     if(rule.rule != null) {
-        response = parseRule(rule.rule);
+        response = parseRuleData(rule.rule);
         modules = modules.concat(response.modules);
         courses = courses.concat(response.courses);
+        if(anyCUR == null) {
+            anyCUR = response.anyCUR;
+        }
+        if(anyMR == null) {
+            anyMR = response.anyMR;
+        }
     } else if(rule.rules != null) {
         for(var i = 0; i < rule.rules.length; i++) {
-            response = parseRule(rule.rules[i]);
+            response = parseRuleData(rule.rules[i]);
             modules = modules.concat(response.modules);
             courses = courses.concat(response.courses);
+            if(anyCUR == null) {
+                anyCUR = response.anyCUR;
+            }
+            if(anyMR == null) {
+                anyMR = response.anyMR;
+            }
         }
     } else {
         if(rule.type == 'ModuleRule') {
             modules.push(rule.moduleGroupId);
         } else if(rule.type == 'CourseUnitRule') {
             courses.push(rule.courseUnitGroupId);
+        } else if(rule.type == 'AnyCourseUnitRule') {
+            anyCUR = rule;
+        } else if(rule.type == 'AnyModuleRule') {
+            anyMR = rule;
+        } else if(rule.type == 'CreditsRule') {
+            creditsRules.push(rule);
         }
     }
-    return { modules: modules, courses: courses }
+    return { modules: modules, courses: courses, anyCUR: anyCUR, anyMR: anyMR, creditsRules: creditsRules}
 }
 
 function getRules(rule) {
