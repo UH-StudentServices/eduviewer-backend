@@ -4,7 +4,21 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const client = require('./client');
+const qs = (function(a) {
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=', 2);
+        if (p.length == 1)
+            b[p[0]] = "";
+        else
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return b;
+})(window.location.search.substr(1).split('&'));
 // end::vars[]
+
 
 // tag::app[]
 class App extends React.Component {
@@ -118,10 +132,11 @@ class ElementList extends React.Component {
         var elements = this.state.elements.map(elem =>
             <Element key={elem.id} id={elem.id} elem={elem} lv={this.props.lv}/>);
         return (
-            <li>
-                id: {this.props.id}
+            <div>
+                {qs['debug'] == 'true' && <div>id: {this.props.id}</div>}
                 {elements}
-            </li>
+            </div>
+
         )
     }
 }
@@ -169,7 +184,7 @@ class Element extends React.Component {
         return(
             <ul>
                 <li><b>{elem.name.fi}</b> (Education)</li>
-                <li>id: {elem.id} </li>
+                {qs['debug'] == 'true' && <li>id: {elem.id} </li>}
                 <li>
                     Tutkinnon rakenne<br/>
                     {structure}
@@ -183,7 +198,7 @@ class Element extends React.Component {
         return (
             <ul>
                 {this.renderElementHeader(elem)}
-                {this.renderRules(elem.rule)}
+                <Rule key={'rule-' + elem.rule.localId} rule={elem.rule} lv={this.props.lv}/>
             </ul>
         )
     }
@@ -207,17 +222,26 @@ class Element extends React.Component {
         return (
             <div>
                 <li><b>{elem.name.fi}</b></li>
-                <li>id: {elem.id}</li>
-                <li>{elem.type}</li>
-                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopisteet {elem.targetCredits.min} - {elem.targetCredits.max}</li> : <li>Opintopisteet {elem.targetCredits.max}</li>)}
+                {qs['debug'] == 'true' && <li>id: {elem.id}</li>}
+                {qs['debug'] == 'true' && <li>{elem.type}</li>}
+                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopistevaatimukset {elem.targetCredits.min} - {elem.targetCredits.max}op</li> : <li>Opintopistevaatimukset {elem.targetCredits.min}op</li>)}
             </div>)
     }
 
-    renderRules(elem) {
-        if(elem.type == 'CompositeRule') {
-            return (<CompositeRule key={elem.id} rule={elem} lv={this.props.lv}/>);
-        } else if(elem.type == 'CreditsRule') {
-            return (<CreditsRule key={elem.id} rule={elem} lv={this.props.lv}/>);
+
+}
+
+class Rule extends React.Component {
+    render() {
+        var rule = this.props.rule;
+        if(rule.type == 'CompositeRule') {
+            return (<CompositeRule key={rule.id} rule={rule} lv={this.props.lv}/>);
+        } else if(rule.type == 'CreditsRule') {
+            return (<CreditsRule key={rule.id} rule={rule} lv={this.props.lv}/>);
+        } else if(rule.type == 'AnyCourseUnitRule') {
+            return (<li>Mikä tahansa opintojakso</li>)
+        } else if(rule.type == 'AnyModuleRule') {
+            return (<li>Mikä tahansa opintokokonaisuus</li>)
         }
     }
 }
@@ -239,11 +263,10 @@ class CompositeRule extends React.Component {
 
     render() {
         var rule = this.props.rule;
-        console.log(rule);
         var rulesData = parseRule(rule);
         if(this.isModules(rule.rules)) {
             return (
-                <ul>
+                <div>
                     {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
                         <li>
                             <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
@@ -258,32 +281,46 @@ class CompositeRule extends React.Component {
                         <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
                                  lv={this.props.lv} rule={rule}/>
                     }
-                </ul>
+                </div>
             )
+
+            /*                     {
+             rule.allMandatory && <li><b>Kaikki opintojaksot ovat pakollisia</b></li>
+             }
+             */
+
         } else {
             return (
-                <li>
-                    Opintojaksot<br/>
+                <div>
+                    <li> Opintojaksot </li>
                     <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
-                </li>
+                </div>
             )
         }
-
-        return (
-            <li>
-
-            </li>
-        )
     }
 }
 
 class CreditsRule extends React.Component {
+
+    creditsRow(credits) {
+        var creditsRow = "";
+        if(credits.max == null || credits.min == credits.max) {
+            creditsRow = credits.min + "op";
+        } else {
+            creditsRow = credits.min + "-" + credits.max + "op";
+        }
+        return (
+            <li>Valitse {creditsRow}</li>
+        )
+    }
+
     render() {
+        var rule = this.props.rule;
+        var credits = rule.credits;
         return (
             <ul>
-                <li>
-                    creditRule
-                </li>
+                {this.creditsRow(credits)}
+                {<Rule key={rule.rule.localId} rule={rule.rule} lv={this.props.lv}/>}
             </ul>
         )
     }
@@ -452,7 +489,7 @@ function getElementStructure(struct, lv) {
             }
             structures.push(<ul key={property}>
                 <li>{phase.name.fi}</li>
-                <li><ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}" /></li>
+                <ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}" />
             </ul>)
         }
     }
