@@ -275,10 +275,15 @@ public class StudyStructureService extends AbstractService {
         return moduleResults;
     }
 
-    public String getByAllIds(List<String> idList, String lv) throws IOException {
+    public String getByAllIds(List<String> idList, String lv) throws Exception {
         ArrayNode results = mapper.createArrayNode();
         for(String id : idList) {
-            results.addAll(findByGroupId(id));
+            JsonNode node = findFromAllById(id);
+            if(node != null) {
+                results.add(node);
+            } else {
+                results.addAll(findByGroupId(id));
+            }
         }
         return filterResultsByLvAndPrint(results, lv);
     }

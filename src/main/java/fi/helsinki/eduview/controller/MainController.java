@@ -60,7 +60,7 @@ public class MainController {
 
     @RequestMapping(value = "/api/all_ids", produces = "application/json; charset=utf-8", method = RequestMethod.POST)
     @ResponseBody
-    public String getByAllIds(@RequestBody String ids, @RequestParam(required = false) String lv) throws IOException {
+    public String getByAllIds(@RequestBody String ids, @RequestParam(required = false) String lv) throws Exception {
         List<String> idList = parseIds(ids);
         return studyService.getByAllIds(idList, lv);
     }

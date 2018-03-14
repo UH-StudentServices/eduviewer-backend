@@ -23,8 +23,7 @@ public abstract class AbstractService {
     protected Environment env;
     protected ObjectMapper mapper = new ObjectMapper();
 
-    private JsonNode filterResultByLv(JsonNode response) throws JsonProcessingException {
-        String lv = getLv();
+    private JsonNode filterResultByLv(JsonNode response, String lv) throws JsonProcessingException {
         if(!response.has("curriculumPeriodIds")) {
             return response;
         }
@@ -37,13 +36,13 @@ public abstract class AbstractService {
     }
 
     protected JsonNode filterResultsByLv(JsonNode results, String lv) throws JsonProcessingException {
-        if(results.isObject()) {
-            return filterResultByLv(results);
-        }
         ArrayNode filteredResults = mapper.createArrayNode();
-
         if(lv == null || lv.isEmpty()) {
             return filteredResults;
+        }
+
+        if(results.isObject()) {
+            return filterResultByLv(results, lv);
         }
 
         for(JsonNode node : results) {
