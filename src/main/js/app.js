@@ -271,7 +271,7 @@ class CompositeRule extends React.Component {
             }
             {rule.require != null && rule.require.min < rulesData.modules.length &&
             <li>
-                <Dropdown key={'dd-' + rule.localId} rule={rule} ids={rulesData.modules} lv={this.props.lv}/>
+                <Dropdown key={'dd-' + rule.localId} rule={rule} id={'dd-' + rule.localId} ids={rulesData.modules} lv={this.props.lv}/>
             </li>
             }
             {rule.require == null &&

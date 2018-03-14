@@ -37,6 +37,7 @@ public abstract class AbstractService {
 
     protected JsonNode filterResultsByLv(JsonNode results, String lv) throws JsonProcessingException {
         ArrayNode filteredResults = mapper.createArrayNode();
+
         if(lv == null || lv.isEmpty()) {
             return filteredResults;
         }
