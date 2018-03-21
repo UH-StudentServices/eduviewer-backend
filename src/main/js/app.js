@@ -85,7 +85,6 @@ class App extends React.Component {
                         {educationOptions}
                     </select>
                 </li>
-                <li>Education</li>
                 {this.state.lv != undefined && <Element key={this.state.education.id} id={this.state.education.id} elem={this.state.education} lv={this.state.lv}/>}
             </ul>
         )
@@ -194,7 +193,6 @@ class Element extends React.Component {
     }
 
     renderOtherTypes(elem) {
-        var rules = parseRuleData(elem.rule);
         return (
             <ul>
                 {this.renderElementHeader(elem)}
@@ -203,28 +201,24 @@ class Element extends React.Component {
         )
     }
 
-    /*{rules.modules.length > 0 &&
-     <li>
-     Osat<br/>
-     <ul>
-     <ElementList key={'mods-' + elem.id} id={'mods-' + elem.id} ids={rules.modules} lv={this.props.lv} rule={elem.rule}/>
-     </ul>
-     </li>}
-     {rules.courses.length > 0 && elem.rule.require != null && elem.rule.require.min < rules.courses.length && <div>dropdown</div>}
-     {rules.courses.length > 0 && (elem.rule.require == null || elem.rule.require.min >= rules.courses.length) &&
-     <li>
-     Opintojaksot<br/>
-     <CourseList key={'cu-' + elem.id} ids={rules.courses} lv={this.props.lv}/>
-     </li>
-     }*/
-
     renderElementHeader(elem) {
+        var credits = null;
+        if(elem.targetCredits != null) {
+            if(elem.targetCredits.min != elem.targetCredits.max) {
+                credits = elem.targetCredits.min + '-' + elem.targetCredits.max;
+            } else if(elem.targetCredits.max == null) {
+                credits = "väh. " + elem.targetCredits.min;
+            } else {
+                credits = elem.targetCredits.min;
+            }
+            credits = "(" + credits + "op)"
+        }
+
         return (
             <div>
-                <li><b>{elem.name.fi}</b></li>
+                <li><b>{elem.code} {elem.name.fi}</b> {credits}</li>
                 {qs['debug'] == 'true' && <li>id: {elem.id}</li>}
                 {qs['debug'] == 'true' && <li>{elem.type}</li>}
-                {elem.targetCredits != null && ((elem.targetCredits.min != elem.targetCredits.max) ? <li>Opintopistevaatimukset {elem.targetCredits.min} - {elem.targetCredits.max}op</li> : <li>Opintopistevaatimukset {elem.targetCredits.min}op</li>)}
             </div>)
     }
 
@@ -283,10 +277,7 @@ class CompositeRule extends React.Component {
 
     renderCourses(rule, rulesData) {
         return (
-            <div>
-                <li> Opintojaksot </li>
-                <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
-            </div>
+            <CourseList key={'cu-' + rule.id} ids={rulesData.courses} lv={this.props.lv}/>
         )
     }
 
@@ -601,7 +592,8 @@ class CourseList extends React.Component {
 
 
     render() {
-        var courseNames = this.state.courseNames.map((node, index) => <li key={index + "" + node.name.fi}>{node.name.fi}&nbsp;
+        var courseNames = this.state.courseNames.map((node, index) =>
+            <li key={index + "" + node.name.fi}>{node.code} {node.name.fi}&nbsp;
             ({(node.credits.min == node.credits.max) ?
                 (<b>{node.credits.min}</b>) :
                 (<b>{node.credits.min}-{node.credits.max}</b>)}<b>op</b>)</li>);

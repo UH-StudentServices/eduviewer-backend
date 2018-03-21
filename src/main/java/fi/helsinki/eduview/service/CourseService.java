@@ -67,10 +67,7 @@ public class CourseService extends AbstractService {
         JsonNode filtered = filterResultsByLv(array, lv);
         array = mapper.createArrayNode();
         for(JsonNode cu : filtered) {
-            ObjectNode node = mapper.createObjectNode();
-            node.set("name", cu.get("name"));
-            node.set("credits", cu.get("credits"));
-            array.add(node);
+            array.add(cu);
         }
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(array);
     }
