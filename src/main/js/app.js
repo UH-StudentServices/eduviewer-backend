@@ -28,6 +28,7 @@ class App extends React.Component {
         this.state = {educations: [], lvs: [], lv: '', education: {}};
         this.onChangeLv = this.onChangeLv.bind(this);
         this.onChangeEd = this.onChangeEd.bind(this);
+        this.onViewAll = this.onViewAll.bind(this);
     }
 
     componentDidMount() {
@@ -51,9 +52,17 @@ class App extends React.Component {
         });
     }
 
+    onViewAll(event) {
+        this.updateEducation(getSelectValues(document.getElementById("ed"))[0], this.state.lv);
+    }
+
     onChangeLv(event) {
         this.setState({lv: event.target.value});
-        client({method: 'GET', path: '/api/by_id/' + this.state.education.id + "?lv=" + event.target.value}).done(response => {
+        this.updateEducation(getSelectValues(document.getElementById("ed"))[0], event.target.value);
+    }
+
+    updateEducation(edId, lv) {
+        client({method: 'GET', path: '/api/by_id/' + edId + "?lv=" + lv}).done(response => {
             this.setState({education: response.entity});
         });
     }
@@ -74,6 +83,9 @@ class App extends React.Component {
 
         return (
             <ul>
+                <li>
+                    <input type="checkbox" id="viewAll" name="viewAll" onChange={this.onViewAll}/>Näytä kaikki
+                </li>
                 <li>
                     <select id="lv" name="lv" onChange={this.onChangeLv}>
                         <option value="">---</option>
@@ -263,12 +275,12 @@ class CompositeRule extends React.Component {
                 <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
             </li>
             }
-            {rule.require != null && rule.require.min < rulesData.modules.length &&
+            {!isViewAllEnabled() && (rule.require != null && rule.require.min < rulesData.modules.length) &&
             <li>
                 <Dropdown key={'dd-' + rule.localId} rule={rule} id={'dd-' + rule.localId} ids={rulesData.modules} lv={this.props.lv}/>
             </li>
             }
-            {rule.require == null &&
+            {(isViewAllEnabled() || rule.require == null) &&
             <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
                          lv={this.props.lv} rule={rule}/>
             }
@@ -374,6 +386,11 @@ class Dropdown extends React.Component {
 
         )
     }
+}
+
+function isViewAllEnabled() {
+    console.log("is view enabled: " + document.getElementById("viewAll").checked);
+    return document.getElementById("viewAll").checked;
 }
 
 function getSelectValues(select) {
