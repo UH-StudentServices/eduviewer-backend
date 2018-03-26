@@ -105,12 +105,18 @@ public class StudyStructureService extends AbstractService {
 
     public String getEducations() throws IOException {
         ObjectNode wrapper = mapper.createObjectNode();
-        ArrayNode array = mapper.createArrayNode();
+        List<JsonNode> array = new ArrayList<>();
         for(JsonNode node : educations) {
             if(node.get("documentState").asText().equals("ACTIVE")) {
                 array.add(node);
             }
         }
+        array.sort(new Comparator<JsonNode>() {
+            @Override
+            public int compare(JsonNode o1, JsonNode o2) {
+                return o1.get("name").get("fi").asText().toLowerCase().compareTo(o2.get("name").get("fi").asText().toLowerCase());
+            }
+        });
         wrapper.putArray("educations").addAll(array);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
     }
