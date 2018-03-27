@@ -228,7 +228,6 @@ class Element extends React.Component {
                 <li><b>{elem.name.fi}</b> (Education)</li>
                 {qs['debug'] == 'true' && <li>id: {elem.id} </li>}
                 <li>
-                    Tutkinnon rakenne<br/>
                     {structure}
                 </li>
             </ul>
@@ -301,7 +300,7 @@ class CompositeRule extends React.Component {
 
     renderModules(rule, rulesData) {
         var name = this.props.elem.name.fi.toLowerCase();
-        var dropDownTime = name == 'opintosuunta' || name == 'vieras kieli';
+        var dropDownTime = name == 'opintosuunta' || 'stuydy track' || name == 'vieras kieli' || name == 'foreign language';
         return (<div>
             {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
                 <li>
@@ -604,7 +603,6 @@ function getElementStructure(struct, lv) {
                     options.push(phase.options[i].moduleGroupId);
                 }
                 structures.push(<ul key={property}>
-                    <li>{phase.name.fi}</li>
                     <ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}"/>
                 </ul>)
             }
