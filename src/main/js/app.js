@@ -239,7 +239,7 @@ class Element extends React.Component {
         return (
             <ul>
                 {this.renderElementHeader(elem)}
-                <Rule key={'rule-' + elem.rule.localId} rule={elem.rule} lv={this.props.lv}/>
+                <Rule key={'rule-' + elem.rule.localId} rule={elem.rule} lv={this.props.lv} elem={elem}/>
             </ul>
         )
     }
@@ -272,9 +272,9 @@ class Rule extends React.Component {
     render() {
         var rule = this.props.rule;
         if(rule.type == 'CompositeRule') {
-            return (<CompositeRule key={rule.id} rule={rule} lv={this.props.lv}/>);
+            return (<CompositeRule key={rule.id} rule={rule} lv={this.props.lv} elem={this.props.elem}/>);
         } else if(rule.type == 'CreditsRule') {
-            return (<CreditsRule key={rule.id} rule={rule} lv={this.props.lv}/>);
+            return (<CreditsRule key={rule.id} rule={rule} lv={this.props.lv} elem={this.props.elem}/>);
         } else if(rule.type == 'AnyCourseUnitRule') {
             return (<li>Mikä tahansa opintojakso</li>)
         } else if(rule.type == 'AnyModuleRule') {
@@ -300,20 +300,28 @@ class CompositeRule extends React.Component {
     }
 
     renderModules(rule, rulesData) {
+        var name = this.props.elem.name.fi.toLowerCase();
+        var dropDownTime = name == 'opintosuunta' || name == 'vieras kieli';
         return (<div>
             {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
-            <li>
-                <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
-            </li>
+                <li>
+                    <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
+                </li>
             }
-            {!isViewAllEnabled() && (rule.require != null && rule.require.min < rulesData.modules.length) &&
-            <li>
-                <Dropdown key={'dd-' + rule.localId} rule={rule} id={'dd-' + rule.localId} ids={rulesData.modules} lv={this.props.lv}/>
-            </li>
+            { !isViewAllEnabled() && dropDownTime
+                &&
+                <li>
+                    <Dropdown key={'dd-' + rule.localId} rule={rule} id={'dd-' + rule.localId} ids={rulesData.modules} lv={this.props.lv}/>
+                </li>
             }
-            {(isViewAllEnabled() || rule.require == null) &&
-            <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
-                         lv={this.props.lv} rule={rule}/>
+            { !isViewAllEnabled() && !dropDownTime
+                &&
+                <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
+                             lv={this.props.lv} rule={rule}/>
+            }
+            { (isViewAllEnabled() || rule.require == null) &&
+                <ElementList key={'mods-' + rule.localId} id={'mods-' + rule.localId} ids={rulesData.modules}
+                             lv={this.props.lv} rule={rule}/>
             }
         </div>)
     }
@@ -337,9 +345,9 @@ class CompositeRule extends React.Component {
             <div>
                 {rulesData.courses.length > 0 && this.renderCourses(rule, rulesData)}
                 {rulesData.modules.length > 0 && this.renderModules(rule, rulesData)}
-                {rulesData.anyMR != null && <Rule key={rulesData.anyMR.localId} rule={rulesData.anyMR} lv={this.props.lv}/>}
-                {rulesData.anyCUR != null && <Rule key={rulesData.anyCUR.localId} rule={rulesData.anyCUR} lv={this.props.lv}/>}
-                {rulesData.creditsRules.length > 0 && <Rule key={rulesData.creditsRules[0].localId} rule={rulesData.creditsRules[0]} lv={this.props.lv}/>}
+                {rulesData.anyMR != null && <Rule key={rulesData.anyMR.localId} rule={rulesData.anyMR} lv={this.props.lv} elem={this.props.elem}/>}
+                {rulesData.anyCUR != null && <Rule key={rulesData.anyCUR.localId} rule={rulesData.anyCUR} lv={this.props.lv} elem={this.props.elem}/>}
+                {rulesData.creditsRules.length > 0 && <Rule key={rulesData.creditsRules[0].localId} rule={rulesData.creditsRules[0]} lv={this.props.lv} elem={this.props.elem}/>}
             </div>
         )
     }
@@ -365,7 +373,7 @@ class CreditsRule extends React.Component {
         return (
             <ul>
                 {this.creditsRow(credits)}
-                {<Rule key={rule.rule.localId} rule={rule.rule} lv={this.props.lv}/>}
+                {<Rule key={rule.rule.localId} rule={rule.rule} lv={this.props.lv} elem={this.props.elem}/>}
             </ul>
         )
     }
