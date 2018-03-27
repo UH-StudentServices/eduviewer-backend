@@ -17,6 +17,7 @@ const qs = (function(a) {
     }
     return b;
 })(window.location.search.substr(1).split('&'));
+const default_lv = 'hy-lv-68';
 // end::vars[]
 
 
@@ -25,24 +26,32 @@ class App extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {educations: [], lvs: [], lv: '', education: {}};
+        this.state = {educations: [], lvs: [], lv: '', education: {}, lvNames: {}};
         this.onChangeLv = this.onChangeLv.bind(this);
         this.onChangeEd = this.onChangeEd.bind(this);
         this.onViewAll = this.onViewAll.bind(this);
+        this.initLv = this.initLv.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
         client({method: 'GET', path: '/api/educations'}).done(response => {
             this.setState({educations: response.entity.educations});
+            client({method: 'GET', path: '/api/available_lvs/' + event.target.value}).done(response => {
+                this.setState({lvs: response.entity});
+                this.initLv(response.entity);
+            });
+        });
+        client({method: 'GET', path: '/api/lv_names'}).done(response => {
+            this.setState({lvNames: response.entity});
         });
     }
 
     onChangeEd(event) {
-        console.log("fetching lvs");
-        this.setState({lvs: [], lv: ''});
+        this.setState({lvs: []});
         client({method: 'GET', path: '/api/available_lvs/' + event.target.value}).done(response => {
-            this.setState({lvs: response.entity, lv: response.entity[0]});
-            document.getElementById("lv").value = response.entity[0];
+            this.setState({lvs: response.entity});
+            this.initLv(response.entity);
+
         });
         client({
             method: 'GET',
@@ -50,6 +59,29 @@ class App extends React.Component {
         }).done(response => {
             this.setState({education: response.entity});
         });
+    }
+
+    componentDidMount() {
+        document.getElementById("lv").onChange();
+    }
+
+    initLv(entity) {
+        var elementById = document.getElementById("lv");
+        console.log("lv response, old value: " + this.state.lv);
+        console.log(entity);
+        var lv = default_lv;
+        if (this.state.lv == '' && entity.indexOf(default_lv) >= 0) {
+            elementById.value = default_lv;
+        } else if (this.state.lv != '' && entity.indexOf(this.state.lv) > 0) {
+            elementById.value = this.state.lv;
+            lv = this.state.lv;
+        } else {
+            elementById.value = default_lv;
+        }
+        this.setState({lv: lv});
+        var event = new Event('onchange', {bubbles: true});
+        elementById.dispatchEvent(event);
+        return lv;
     }
 
     onViewAll(event) {
@@ -77,7 +109,7 @@ class App extends React.Component {
 
         if(this.state.lvs.length > 0) {
             options = this.state.lvs.map(lv =>
-                <option key={lv} value={lv}>{lv}</option>
+                <option key={lv} value={lv}>{this.state.lvNames[lv]}</option>
             );
         }
 
@@ -88,7 +120,6 @@ class App extends React.Component {
                 </li>
                 <li>
                     <select id="lv" name="lv" onChange={this.onChangeLv}>
-                        <option value="">---</option>
                         {options}
                     </select>
                 </li>

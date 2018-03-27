@@ -34,6 +34,12 @@ public class MainController {
         RequestContextHolder.getRequestAttributes().setAttribute("lv", lv, RequestAttributes.SCOPE_SESSION);
     }
 
+    @RequestMapping(value = "/api/lv_names", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getLvNames() throws Exception {
+        return studyService.getLvNames();
+    }
+
     @RequestMapping(value = "/api/available_lvs/{educationId}", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String availbleLV(@PathVariable String educationId) throws Exception {
