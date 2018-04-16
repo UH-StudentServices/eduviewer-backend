@@ -359,9 +359,9 @@ class CreditsRule extends React.Component {
     creditsRow(credits) {
         var creditsRow = "";
         if(credits.max == null || credits.min == credits.max) {
-            creditsRow = credits.min + "op";
+            creditsRow = credits.min + " op";
         } else {
-            creditsRow = credits.min + "-" + credits.max + "op";
+            creditsRow = credits.min + "-" + credits.max + " op";
         }
         return (
             <li>Valitse {creditsRow}</li>
