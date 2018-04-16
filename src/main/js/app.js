@@ -100,7 +100,6 @@ class App extends React.Component {
     }
 
     render() {
-        console.log("rendering education");
         var educationOptions = this.state.educations.map(ed =>
             <option key={ed.id} value={ed.id}>{ed.name.fi}</option>
         );
@@ -224,13 +223,13 @@ class Element extends React.Component {
         console.log(structure);
 
         return(
-            <ul>
+            <div>
                 <li><b>{elem.name.fi}</b> (Education)</li>
                 {qs['debug'] == 'true' && <li>id: {elem.id} </li>}
                 <li>
                     {structure}
                 </li>
-            </ul>
+            </div>
         )
     }
 
@@ -294,19 +293,14 @@ class CompositeRule extends React.Component {
         return array.length == 0 || array[0].type == 'ModuleRule';
     }
 
-    createMarkUp() {
-        return {__html: this.props.rule.description.fi}
+    createMarkUp(rule) {
+        return {__html: rule.description.fi}
     }
 
     renderModules(rule, rulesData) {
         var name = this.props.elem.name.fi.toLowerCase();
-        var dropDownTime = name == 'opintosuunta' || 'stuydy track' || name == 'vieras kieli' || name == 'foreign language';
+        var dropDownTime = (name == 'opintosuunta' || name == 'stuydy track') || (name == 'vieras kieli' || name == 'foreign language');
         return (<div>
-            {rule.description != null && isNotEmpty(this.props.rule.description.fi) &&
-                <li>
-                    <div dangerouslySetInnerHTML={this.createMarkUp()}></div>
-                </li>
-            }
             { !isViewAllEnabled() && dropDownTime
                 &&
                 <li>
@@ -340,8 +334,16 @@ class CompositeRule extends React.Component {
             console.log(rulesData);
         }
 
+        console.log(rule.localId + ": desc: " + rule.description);
         return (
             <div>
+                {rule.description != null && isNotEmpty(rule.description.fi) &&
+                    <li>
+                        <i>
+                            <div name="description" dangerouslySetInnerHTML={this.createMarkUp(rule)}></div>
+                        </i>
+                    </li>
+                }
                 {rulesData.courses.length > 0 && this.renderCourses(rule, rulesData)}
                 {rulesData.modules.length > 0 && this.renderModules(rule, rulesData)}
                 {rulesData.anyMR != null && <Rule key={rulesData.anyMR.localId} rule={rulesData.anyMR} lv={this.props.lv} elem={this.props.elem}/>}
@@ -602,13 +604,13 @@ function getElementStructure(struct, lv) {
                 for (var i = 0; i < phase.options.length; i++) {
                     options.push(phase.options[i].moduleGroupId);
                 }
-                structures.push(<ul key={property}>
+                structures.push(<div key={property}>
                     <ElementList key={'opt-' + property} id={'opt-' + property} ids={options} lv={lv} rule="{}"/>
-                </ul>)
+                </div>)
             }
         }
     }
-    return <ul>{structures}</ul>;
+    return <div>{structures}</div>;
 
 }
 
