@@ -195,6 +195,9 @@ class Element extends React.Component {
     }
 
     render() {
+        if(this.props.elem.documentState == 'DELETED') {
+            return (<div></div>);
+        }
         var elem = this.props.elem;
         switch(elem.type) {
             case 'Education':
@@ -224,7 +227,7 @@ class Element extends React.Component {
 
         return(
             <div>
-                <li><b>{elem.name.fi}</b> (Education)</li>
+                <li>{elem.documentState == 'DRAFT' && <b>(LUONNOS)</b>} <b>{elem.name.fi}</b></li>
                 {qs['debug'] == 'true' && <li>id: {elem.id} </li>}
                 <li>
                     {structure}
@@ -252,12 +255,14 @@ class Element extends React.Component {
             } else {
                 credits = elem.targetCredits.min;
             }
-            credits = "(" + credits + "op)"
+            credits = credits + " op"
         }
 
         return (
             <div>
-                <li><b>{elem.code} {elem.name.fi}</b> {credits}</li>
+
+                {credits != null && <li> {elem.documentState == 'DRAFT' && <b>(DRAFT)</b>} <b>{elem.code} {elem.name.fi}</b> (<b>{credits}</b>)</li>}
+                {credits == null && <li> {elem.documentState == 'DRAFT' && <b>(DRAFT)</b>} <b>{elem.code} {elem.name.fi}</b></li>}
                 {qs['debug'] == 'true' && <li>id: {elem.id}</li>}
                 {qs['debug'] == 'true' && <li>{elem.type}</li>}
             </div>)
