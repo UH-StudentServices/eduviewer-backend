@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -21,13 +22,17 @@ import java.util.*;
 @Service
 public class StudyStructureService extends AbstractService {
 
+    @Autowired private CourseService courseService;
+
     private boolean init = false;
+    private boolean filteringEnabled = true;
     private ObjectMapper mapper = new ObjectMapper();
     private List<JsonNode> educations = new ArrayList<>();
     private List<JsonNode> modules = new ArrayList<>();
+    private List<String> whitelisted = Arrays.asList("name", "id", "groupId", "rule", "code", "credits");
 
     @PostConstruct
-    private void init() throws IOException {
+    public void init() throws IOException {
         if(init) {
            return;
         }
@@ -140,10 +145,8 @@ public class StudyStructureService extends AbstractService {
     private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList) {
         ArrayNode array = mapper.createArrayNode();
         for(JsonNode child : nodeList) {
-            if (child.get("groupId").asText().equals(id)) {
-//                if(child.get("documentState").asText().equals("ACTIVE")) {
-                    array.add(child);
-//                }
+            if (child.get("groupId").asText().equals(id) && child.get("documentState").asText().equals("ACTIVE")) {
+                array.add(child);
             }
         }
         return array;
@@ -241,39 +244,25 @@ public class StudyStructureService extends AbstractService {
         }
     }
 
-    private List<String> handleNodeRuleTraverse(JsonNode node) {
-        List<String> newIds = new ArrayList<>();
-        if(!node.has("rule")) {
-            return newIds;
-        }
-        newIds.addAll(readRules(node.get("rule")));
-        return newIds;
-    }
-
-    private List<String> readRules(JsonNode ruleNode) {
-        List<String> newIds = new ArrayList<>();
-        if(ruleNode.has("moduleGroupId")) {
-            newIds.add(ruleNode.get("moduleGroupId").asText());
-        }
-        if(ruleNode.has("rules")) {
-            for (JsonNode rule : ruleNode.get("rules")) {
-                newIds.addAll(readRules(rule));
-            }
-        }
-        return newIds;
-    }
-
     public String getByGroupId(String groupId) throws IOException {
         ArrayNode moduleResults = findByGroupId(groupId);
         return filterResultsByLvAndPrint(moduleResults, null);
     }
 
+    private JsonNode findByGroupIdAndFilter(String groupId, String lv) throws Exception {
+        JsonNode results = findNodeByGroupId(groupId, educations);
+        if(results == null || results.size() == 0) {
+            results = findNodeByGroupId(groupId, modules);
+        }
+        JsonNode filtered = filterResultsByLv(results, lv);
+        if(filtered.size() > 1) {
+            System.out.println("uh oh, returning multiple values for " + groupId + " + and " + lv);
+        }
+        return filtered.get(0);
+    }
+
     private ArrayNode findByGroupId(String groupId) {
         ArrayNode node = mapper.createArrayNode();
-//        ArrayNode results = findNodeByGroupId(groupId, educations);
-//        if(results != null) {
-//            node.addAll(results);
-//        }
         ArrayNode moduleResults = findNodeByGroupId(groupId, modules);
         if(moduleResults != null) {
             node.addAll(moduleResults);
@@ -325,5 +314,146 @@ public class StudyStructureService extends AbstractService {
             node.add(new TextNode(lv));
         }
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    }
+
+    public String getTree(String id, String lv) throws Exception {
+        JsonNode node = findByGroupIdAndFilter(id, lv);
+        if(node.get("type").asText().equals("Education")) {
+            return getTreeFromEducation(node, lv);
+        } else {
+            return getTreeFromModule(node, lv);
+        }
+
+    }
+
+    private JsonNode findNodeByIdFiltered(String id, String lv) throws Exception {
+        JsonNode node = findFromAllById(id);
+        if(node == null) {
+            return mapper.createObjectNode();
+        }
+        return filterResultsByLv(node, lv);
+    }
+
+    private String getTreeFromModule(JsonNode node, String lv) throws Exception {
+        traverseModule(node, lv);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    }
+
+    private String getTreeFromEducation(JsonNode node, String lv) throws Exception {
+        JsonNode lowerDegree = node.get("structure").get("phase1").get("options").get(0);
+        JsonNode firstModule = findByGroupIdAndFilter(lowerDegree.get("moduleGroupId").asText(), lv);
+        if(firstModule != null) {
+            traverseModule(firstModule, lv);
+        }
+        addDataNode((ObjectNode)node, firstModule);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    }
+
+    private void traverseModule(JsonNode node, String lv) throws Exception {
+        JsonNode ruleNode = node.get("rule");
+        if(ruleNode != null) {
+            handleRule(ruleNode, lv);
+        }
+    }
+
+    private void handleRule(JsonNode ruleNode, String lv) throws Exception {
+        String type = ruleNode.get("type").asText();
+        switch(type) {
+            case "CompositeRule":
+                handleCompositeRule(ruleNode, lv);
+                break;
+            case "CreditsRule":
+                handleCreditRule(ruleNode, lv);
+                break;
+            case "ModuleRule":
+                handleModuleRule(ruleNode, lv);
+                break;
+            case "CourseUnitRule":
+                handleCourseUnitRule(ruleNode, lv);
+                break;
+            case "AnyCourseUnitRule":
+                handleAnyCourseUnitRule(ruleNode, lv);
+                break;
+            case "AnyModuleRule":
+                handleAnyModuleRule(ruleNode, lv);
+                break;
+            default:
+                System.out.println("encountered new role type: " + type + " + for " + ruleNode.get("localId").asText());
+        }
+
+    }
+
+    private void handleCourseUnitRule(JsonNode ruleNode, String lv) throws IOException {
+        String groupId = ruleNode.get("courseUnitGroupId").asText();
+        JsonNode node = courseService.getCUNameById(groupId, lv);
+        addDataNode((ObjectNode) ruleNode, node);
+    }
+
+    private void handleAnyCourseUnitRule(JsonNode ruleNode, String lv) {
+        ObjectNode textNode = mapper.createObjectNode();
+        textNode.set("name", new TextNode("anyCourseUnitRule"));
+        addDataNode((ObjectNode) ruleNode, textNode);
+    }
+
+    private void handleAnyModuleRule(JsonNode ruleNode, String lv) {
+        ObjectNode textNode = mapper.createObjectNode();
+        textNode.set("name", new TextNode("anyModuleRule"));
+        addDataNode((ObjectNode) ruleNode, textNode);
+    }
+
+    private void handleCompositeRule(JsonNode ruleNode, String lv) throws Exception {
+        for(JsonNode subRule : ruleNode.get("rules")) {
+            handleRule(subRule, lv);
+        }
+    }
+
+    private void handleCreditRule(JsonNode ruleNode, String lv) throws Exception {
+        handleRule(ruleNode.get("rule"), lv);
+    }
+
+    private void handleModuleRule(JsonNode ruleNode, String lv) throws Exception {
+        JsonNode node = findByGroupIdAndFilter(ruleNode.get("moduleGroupId").asText(), lv);
+        traverseModule(node, lv);
+        addDataNode((ObjectNode) ruleNode, node);
+    }
+
+    private void addDataNode(ObjectNode ruleNode, JsonNode node) {
+        if(!filteringEnabled) {
+            ruleNode.set("dataNode", node);
+            return;
+        }
+        ObjectNode filtered = mapper.createObjectNode();
+        ObjectNode original = (ObjectNode)node;
+        Iterator<String> fieldNames = original.fieldNames();
+        while(fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            if(whitelisted.contains(fieldName)) {
+                filtered.set(fieldName, original.get(fieldName));
+            }
+        }
+        ruleNode.set("dataNode", filtered);
+    }
+
+
+    private List<String> handleNodeRuleTraverse(JsonNode node) {
+        List<String> newIds = new ArrayList<>();
+        if(!node.has("rule")) {
+            return newIds;
+        }
+        newIds.addAll(readRules(node.get("rule")));
+        return newIds;
+    }
+
+    private List<String> readRules(JsonNode ruleNode) {
+        List<String> newIds = new ArrayList<>();
+        if(ruleNode.has("moduleGroupId")) {
+            newIds.add(ruleNode.get("moduleGroupId").asText());
+        }
+        if(ruleNode.has("rules")) {
+            for (JsonNode rule : ruleNode.get("rules")) {
+                newIds.addAll(readRules(rule));
+            }
+        }
+        return newIds;
     }
 }

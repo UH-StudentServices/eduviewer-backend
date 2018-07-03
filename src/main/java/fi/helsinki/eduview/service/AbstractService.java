@@ -27,7 +27,8 @@ public abstract class AbstractService {
     protected ObjectMapper mapper = new ObjectMapper();
 
     private JsonNode filterResultByLv(JsonNode response, String lv) throws JsonProcessingException {
-        if(!response.has("curriculumPeriodIds")) {
+        if(!response.has("curriculumPeriodIds")
+                || response.get("curriculumPeriodIds").size() == 0) {
             return response;
         }
         for(JsonNode lvNode : response.get("curriculumPeriodIds")) {

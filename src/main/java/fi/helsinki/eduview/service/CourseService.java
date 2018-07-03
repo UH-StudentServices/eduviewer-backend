@@ -56,6 +56,15 @@ public class CourseService extends AbstractService {
         return mapper.createArrayNode();
     }
 
+    public JsonNode getCUNameById(String id, String lv) throws IOException {
+        JsonNode root = openFile(id);
+        JsonNode filtered = filterResultsByLv(root, lv);
+        if(filtered.size() > 1) {
+            System.out.println("problem with filtering cus, more than one response: " + id + " / " + lv);
+        }
+        return filtered.get(0);
+    }
+
     public String getCUNamesByIds(List<String> idList, String lv) throws IOException {
         ArrayNode array = mapper.createArrayNode();
         for(String id : idList) {

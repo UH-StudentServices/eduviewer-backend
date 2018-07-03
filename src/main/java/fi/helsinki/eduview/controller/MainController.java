@@ -13,6 +13,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,12 +28,6 @@ public class MainController {
 
     @Autowired
     private CourseService courseService;
-
-    @RequestMapping(value = "/api/update_lv/{lv}", produces = "application/json; charset=utf-8")
-    @ResponseStatus(HttpStatus.OK)
-    public void updateLv(@PathVariable String lv) {
-        RequestContextHolder.getRequestAttributes().setAttribute("lv", lv, RequestAttributes.SCOPE_SESSION);
-    }
 
     @RequestMapping(value = "/api/lv_names", produces = "application/json; charset=utf-8")
     @ResponseBody
@@ -84,12 +79,11 @@ public class MainController {
         return list;
     }
 
-//    @RequestMapping(value = "/api/structure/tree/{id}", produces = "application/json; charset=utf-8")
-//    @ResponseBody
-//    public String getStructureTree(@PathVariable String id) throws Exception {
-//        return studyService.traverseStructureTree(id);
-//        return null;
-//    }
+    @RequestMapping(value = "/api/tree/{id}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
+    @ResponseBody
+    public String getFullDataAsTree(@PathVariable String id, @RequestParam(required = true) String lv) throws Exception {
+        return studyService.getTree(id, lv);
+    }
 
     @RequestMapping(value = "/api/by_id_nodes/{id}", produces = "application/json; charset=utf-8")
     @ResponseBody
