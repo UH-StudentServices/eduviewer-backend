@@ -412,7 +412,13 @@ public class StudyStructureService extends AbstractService {
     }
 
     private void handleModuleRule(JsonNode ruleNode, String lv) throws Exception {
-        JsonNode node = findByGroupIdAndFilter(ruleNode.get("moduleGroupId").asText(), lv);
+        String moduleGroupId = ruleNode.get("moduleGroupId").asText();
+        JsonNode node = findByGroupIdAndFilter(moduleGroupId, lv);
+
+        if(node == null) {
+            System.out.println("moduleGroupId " + moduleGroupId + " / " + lv + " is missing");
+            return;
+        }
         traverseModule(node, lv);
         addDataNode((ObjectNode) ruleNode, node);
     }
