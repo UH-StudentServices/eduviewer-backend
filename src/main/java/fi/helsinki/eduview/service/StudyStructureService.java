@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,8 @@ import java.util.*;
  */
 @Service
 public class StudyStructureService extends AbstractService {
+
+    private Logger logger = Logger.getLogger(StudyStructureService.class);
 
     @Autowired private CourseService courseService;
 
@@ -65,7 +68,7 @@ public class StudyStructureService extends AbstractService {
                 e.printStackTrace();
             }
         }
-        System.out.println("done");
+        logger.info("init from " + dir + " done");
     }
 
     private void initToCorrectCollection(JsonNode childNode) {
@@ -76,24 +79,6 @@ public class StudyStructureService extends AbstractService {
         }
     }
 
-    private void initFiles(ObjectMapper mapper, String dir, List<JsonNode> list) throws IOException {
-        for (File file : new File(dir).listFiles()) {
-            try {
-                JsonNode root = mapper.readTree(Files.readAllBytes(file.toPath()));
-                if (root.isArray()) {
-                    for (JsonNode childNode : root) {
-                        list.add(childNode);
-                    }
-                } else {
-                    list.add(root);
-                }
-            }
-                catch(JsonParseException e) {
-                    System.out.println("wtf");
-                }
-        }
-
-    }
 
     public String getNodesById(String id) throws Exception {
         ArrayNode array = mapper.createArrayNode();
@@ -101,10 +86,6 @@ public class StudyStructureService extends AbstractService {
         if(subNode != null) {
             array.add(subNode);
         }
-//        subNode = getByGroupId(id);
-//        if(subNode != null) {
-//            array.addAll((ArrayNode)subNode);
-//        }
         return filterResultsByLvAndPrint(array, null);
     }
 
@@ -256,7 +237,7 @@ public class StudyStructureService extends AbstractService {
         }
         JsonNode filtered = filterResultsByLv(results, lv);
         if(filtered.size() > 1) {
-            System.out.println("uh oh, returning multiple values for " + groupId + " + and " + lv);
+            logger.warn("uh oh, returning multiple values for " + groupId + " + and " + lv);
         }
         return filtered.get(0);
     }
@@ -378,7 +359,7 @@ public class StudyStructureService extends AbstractService {
                 handleAnyModuleRule(ruleNode, lv);
                 break;
             default:
-                System.out.println("encountered new role type: " + type + " + for " + ruleNode.get("localId").asText());
+                logger.warn("encountered new role type: " + type + " + for " + ruleNode.get("localId").asText());
         }
 
     }
@@ -416,7 +397,7 @@ public class StudyStructureService extends AbstractService {
         JsonNode node = findByGroupIdAndFilter(moduleGroupId, lv);
 
         if(node == null) {
-            System.out.println("moduleGroupId " + moduleGroupId + " / " + lv + " is missing");
+            logger.warn("moduleGroupId " + moduleGroupId + " / " + lv + " is missing");
             return;
         }
         traverseModule(node, lv);

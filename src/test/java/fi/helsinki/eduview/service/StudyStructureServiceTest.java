@@ -4,6 +4,7 @@ package fi.helsinki.eduview.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +23,8 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class StudyStructureServiceTest {
+
+    private Logger logger = Logger.getLogger(StudyStructureServiceTest.class);
 
     @InjectMocks
     private StudyStructureService service;
@@ -47,12 +50,12 @@ public class StudyStructureServiceTest {
 
     @Test
     public void testTreeEducation() throws Exception {
-        System.out.println(service.getTree("hy-EDU-114256075", "hy-lv-68"));
+        logger.info(service.getTree("hy-EDU-114256075", "hy-lv-68"));
     }
 
     @Test
     public void testTreeModule() throws Exception {
-        System.out.println(service.getTree("hy-DP-114257414", "hy-lv-68"));
+        logger.info(service.getTree("hy-DP-114257414", "hy-lv-68"));
     }
 
 }
