@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 /**
- * @author: hpr
+ * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
  * @date: 20/02/2018
  */
 @Configuration

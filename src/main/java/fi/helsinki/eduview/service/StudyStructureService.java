@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 /**
- * @author: hpr
+ * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
  * @date: 04/01/2018
  */
 @Service

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author: hpr
+ * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
  * @date: 14/01/2018
  */
 @Service

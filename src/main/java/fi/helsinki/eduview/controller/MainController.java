@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author: hpr
+ * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
  * @date: 04/01/2018
  */
 @Controller
@@ -79,6 +79,8 @@ public class MainController {
         return list;
     }
 
+    // this is the preferred way of doing things, it will return a json tree of all the nodes under id & lv combination
+    // where dataNode contains the next nodes in rule context
     @RequestMapping(value = "/api/tree/{id}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
     @ResponseBody
     public String getFullDataAsTree(@PathVariable String id, @RequestParam(required = true) String lv) throws Exception {
