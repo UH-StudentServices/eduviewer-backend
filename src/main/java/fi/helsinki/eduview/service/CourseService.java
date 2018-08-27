@@ -1,13 +1,9 @@
 package fi.helsinki.eduview.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -61,7 +57,7 @@ public class CourseService extends AbstractService {
 
     public JsonNode getCUNameById(String id, String lv) throws IOException {
         JsonNode root = openFile(id);
-        JsonNode filtered = filterResultsByLv(root, lv);
+        JsonNode filtered = filterResults(root, lv);
         if(filtered.size() > 1) {
             System.out.println("problem with filtering cus, more than one response: " + id + " / " + lv);
         }
@@ -76,7 +72,7 @@ public class CourseService extends AbstractService {
                 array.addAll((ArrayNode)root);
             }
         }
-        JsonNode filtered = filterResultsByLv(array, lv);
+        JsonNode filtered = filterResults(array, lv);
         array = mapper.createArrayNode();
         for(JsonNode cu : filtered) {
             array.add(cu);
@@ -91,7 +87,7 @@ public class CourseService extends AbstractService {
 //                array.add(cu);
 //            }
 //        }
-//        JsonNode filtered = filterResultsByLv(array, lv);
+//        JsonNode filtered = filterResults(array, lv);
 //        array = mapper.createArrayNode();
 //        for(JsonNode cu : filtered) {
 //            array.add(cu.get("name"));

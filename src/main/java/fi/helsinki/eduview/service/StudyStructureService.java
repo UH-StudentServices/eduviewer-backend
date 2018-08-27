@@ -235,7 +235,7 @@ public class StudyStructureService extends AbstractService {
         if(results == null || results.size() == 0) {
             results = findNodeByGroupId(groupId, modules);
         }
-        JsonNode filtered = filterResultsByLv(results, lv);
+        JsonNode filtered = filterResults(results, lv);
         if(filtered.size() > 1) {
             logger.warn("uh oh, returning multiple values for " + groupId + " + and " + lv);
         }
@@ -299,6 +299,9 @@ public class StudyStructureService extends AbstractService {
 
     public String getTree(String id, String lv) throws Exception {
         JsonNode node = findByGroupIdAndFilter(id, lv);
+        if(node == null) {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.createObjectNode());
+        }
         if(node.get("type").asText().equals("Education")) {
             return getTreeFromEducation(node, lv);
         } else {
@@ -312,7 +315,7 @@ public class StudyStructureService extends AbstractService {
         if(node == null) {
             return mapper.createObjectNode();
         }
-        return filterResultsByLv(node, lv);
+        return filterResults(node, lv);
     }
 
     private String getTreeFromModule(JsonNode node, String lv) throws Exception {
@@ -325,6 +328,8 @@ public class StudyStructureService extends AbstractService {
         JsonNode firstModule = findByGroupIdAndFilter(lowerDegree.get("moduleGroupId").asText(), lv);
         if(firstModule != null) {
             traverseModule(firstModule, lv);
+        } else {
+            firstModule = mapper.createObjectNode();
         }
         addDataNode((ObjectNode)node, firstModule);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
@@ -367,6 +372,10 @@ public class StudyStructureService extends AbstractService {
     private void handleCourseUnitRule(JsonNode ruleNode, String lv) throws IOException {
         String groupId = ruleNode.get("courseUnitGroupId").asText();
         JsonNode node = courseService.getCUNameById(groupId, lv);
+        if(node == null) {
+            logger.warn("could not find course unit with group id " + groupId + " / lv " + lv);
+            return;
+        }
         addDataNode((ObjectNode) ruleNode, node);
     }
 
@@ -411,6 +420,9 @@ public class StudyStructureService extends AbstractService {
         }
         ObjectNode filtered = mapper.createObjectNode();
         ObjectNode original = (ObjectNode)node;
+        if(original == null) {
+            System.out.println("rip");
+        }
         Iterator<String> fieldNames = original.fieldNames();
         while(fieldNames.hasNext()) {
             String fieldName = fieldNames.next();

@@ -12,8 +12,6 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
@@ -27,6 +25,10 @@ public abstract class AbstractService {
     protected ObjectMapper mapper = new ObjectMapper();
 
     private JsonNode filterResultByLv(JsonNode response, String lv) throws JsonProcessingException {
+        response = filterByDocumentState(response);
+        if(response == null) {
+            return mapper.createObjectNode();
+        }
         if(!response.has("curriculumPeriodIds")
                 || response.get("curriculumPeriodIds").size() == 0) {
             return response;
@@ -39,8 +41,9 @@ public abstract class AbstractService {
         return mapper.createObjectNode();
     }
 
-    protected JsonNode filterResultsByLv(JsonNode results, String lv) throws JsonProcessingException {
+    protected JsonNode filterResults(JsonNode results, String lv) throws JsonProcessingException {
         ArrayNode filteredResults = mapper.createArrayNode();
+
 
         if(lv == null || lv.isEmpty()) {
             return filteredResults;
@@ -49,6 +52,8 @@ public abstract class AbstractService {
         if(results.isObject()) {
             return filterResultByLv(results, lv);
         }
+
+        results = filterByDocumentState(results);
 
         for(JsonNode node : results) {
             if(!node.has("curriculumPeriodIds")) {
@@ -68,8 +73,26 @@ public abstract class AbstractService {
         return filteredResults;
     }
 
+    private JsonNode filterByDocumentState(JsonNode results) {
+        if(results.isObject()) {
+            if (!results.get("documentState").asText().equals("ACTIVE")) {
+                return null;
+            }
+            return results;
+        } else {
+            ArrayNode filtered = mapper.createArrayNode();
+            for (JsonNode node : results) {
+                if (!node.get("documentState").asText().equals("ACTIVE")) {
+                    continue;
+                }
+                filtered.add(node);
+            }
+            return filtered;
+        }
+    }
+
     protected String filterResultsByLvAndPrint(JsonNode results, String lv) throws IOException {
-        JsonNode result = filterResultsByLv(results, lv);
+        JsonNode result = filterResults(results, lv);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
     }
 
