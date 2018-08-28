@@ -32,7 +32,7 @@ public class StudyStructureService extends AbstractService {
     private ObjectMapper mapper = new ObjectMapper();
     private List<JsonNode> educations = new ArrayList<>();
     private List<JsonNode> modules = new ArrayList<>();
-    private List<String> whitelisted = Arrays.asList("name", "id", "groupId", "rule", "code", "credits");
+    private List<String> whitelisted = Arrays.asList("name", "id", "groupId", "rule", "code", "credits", "targetCredits");
 
     @PostConstruct
     public void init() throws IOException {
@@ -454,5 +454,38 @@ public class StudyStructureService extends AbstractService {
             }
         }
         return newIds;
+    }
+
+    public String getTreeByCode(String code, String lv) throws Exception {
+        JsonNode node = null;
+        for(JsonNode module : modules) {
+            if(module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())) {
+                node = module;
+                break;
+            }
+        }
+        if(node == null) {
+            return "{}";
+        }
+        String groupId = node.get("groupId").asText();
+        JsonNode ed = null;
+        for(JsonNode education : educations) {
+            JsonNode phase1 = education.get("structure").get("phase1");
+            if(phase1 == null) {
+                continue;
+            }
+            JsonNode lowerDegree = phase1.get("options").get(0);
+            if(lowerDegree == null) {
+                continue;
+            }
+            if(lowerDegree.get("moduleGroupId").asText().equals(groupId)) {
+                ed = education;
+                break;
+            }
+        }
+        if(ed == null) {
+            return "{}";
+        }
+        return getTree(ed.get("groupId").asText(), lv);
     }
 }

@@ -79,6 +79,12 @@ public class MainController {
         return list;
     }
 
+    @RequestMapping(value = "/api/tree_by_code/{code}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
+    @ResponseBody
+    public String getTreeByCode(@PathVariable String code, @RequestParam(required = true) String lv) throws Exception {
+        return studyService.getTreeByCode(code, lv);
+    }
+
     // this is the preferred way of doing things, it will return a json tree of all the nodes under id & lv combination
     // where dataNode contains the next nodes in rule context
     @RequestMapping(value = "/api/tree/{id}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
