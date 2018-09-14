@@ -1,7 +1,6 @@
 package fi.helsinki.eduview.service;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -14,8 +13,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.file.Files;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 /**
@@ -81,16 +78,6 @@ public class StudyStructureService extends AbstractService {
         }
     }
 
-
-    public String getNodesById(String id) throws Exception {
-        ArrayNode array = mapper.createArrayNode();
-        JsonNode subNode = findFromAllById(id);
-        if(subNode != null) {
-            array.add(subNode);
-        }
-        return filterResultsByLvAndPrint(array, null);
-    }
-
     public String getEducations() throws IOException {
         ObjectNode wrapper = mapper.createObjectNode();
         List<JsonNode> array = new ArrayList<>();
@@ -109,30 +96,30 @@ public class StudyStructureService extends AbstractService {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
     }
 
-    public String getById(String id, String lv) throws Exception {
-        JsonNode response = findFromAllById(id);
-        if(response != null) {
-            return filterResultsByLvAndPrint(response, lv);
-        }
-        return null;
-    }
-
-    private JsonNode findFromAllById(String id) throws Exception {
-        JsonNode node = findNodeById(id, educations);
-        if(node == null) {
-            node = findNodeById(id, modules);
-        }
-        return node;
-    }
-
     private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList) {
+        return findNodeByGroupId(id, nodeList, false);
+    }
+
+    private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList, boolean acceptAllStates) {
         ArrayNode array = mapper.createArrayNode();
         for(JsonNode child : nodeList) {
-            if (child.get("groupId").asText().equals(id) && child.get("documentState").asText().equals("ACTIVE")) {
+            if (child.get("groupId").asText().equals(id) && (acceptAllStates || child.get("documentState").asText().equals("ACTIVE"))) {
                 array.add(child);
             }
         }
         return array;
+    }
+
+    protected JsonNode find(String id) throws Exception {
+        return findNodeByGroupId(id, modules, true);
+    }
+
+    private JsonNode findByGroupIdAndFilter(String groupId, String lv) throws Exception {
+        JsonNode results = findNodeByGroupId(groupId, educations);
+        if(results == null || results.size() == 0) {
+            results = findNodeByGroupId(groupId, modules);
+        }
+        return filterResults(groupId, results, lv);
     }
 
     private JsonNode findNodeById(String id, List<JsonNode> root) throws Exception {
@@ -144,152 +131,18 @@ public class StudyStructureService extends AbstractService {
         return null;
     }
 
-    // note: traverse uses only rules and tries to play with ids instead of just working with groupids, needs to be fixed
-    public String traverseTree(String id, boolean filterTree) throws Exception {
-        ArrayNode resultNode = traverseTreeInternal(id);
-        return filterTree ? filterResultsByLvAndPrint(resultNode, null) : mapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultNode);
-    }
-
-    private ArrayNode traverseTreeInternal(String id) throws Exception {
-        Set<String> unfetchedIds = new TreeSet<>();
-        List<JsonNode> results = new ArrayList<>();
-        final List<String> order = new ArrayList<>();
-
-        JsonNode node = findNodeById(id, educations);
-        if(node == null) {
-            node = findNodeById(id, modules);
-        }
-        if(node != null) {
-            results.add(node);
-            order.add(id);
-            List<String> newIds = handleNodeRuleTraverse(node);
-            order.addAll(order.indexOf(id)+1, newIds);
-            unfetchedIds.addAll(newIds);
-            traverse(results, modules, unfetchedIds, order);
-        }
-
-        List<JsonNode> notActive = new ArrayList<>();
-        for(JsonNode sub : results) {
-            if(!sub.get("documentState").asText().equals("ACTIVE")) {
-                notActive.add(sub);
-            }
-        }
-        results.removeAll(notActive);
-
-        Collections.sort(results, new Comparator<JsonNode>() {
-            @Override
-            public int compare(JsonNode o1, JsonNode o2) {
-                return order.indexOf(o1.get("id").asText()) - order.indexOf(o2.get("id").asText());
-            }
-        });
-        ArrayNode resultNode = mapper.createArrayNode();
-        resultNode.addAll(results);
-
-        return resultNode;
-    }
-
-    private void traverse(List<JsonNode> results, List<JsonNode> array, Set<String> idsToCheck, List<String> order) {
-
-        while(!idsToCheck.isEmpty()) {
-            int found = 0;
-            List<String> newIds = new ArrayList<>();
-            for(JsonNode mod : array) {
-                if(results.contains(mod)) {
-                    continue;
-                }
-                List<String> newLocalIds = new ArrayList<>();
-                String id = mod.get("id").asText();
-                String groupId = mod.get("groupId").asText();
-
-                if(idsToCheck.contains(id)) {
-                    results.add(mod);
-                    found++;
-                    newLocalIds = handleNodeRuleTraverse(mod);
-                    order.addAll(order.indexOf(id) + 1, newLocalIds);
-                    idsToCheck.remove(id);
-
-                } else if(idsToCheck.contains(groupId)) {
-                    results.add(mod);
-                    found++;
-                    newLocalIds = handleNodeRuleTraverse(mod);
-                    order.add(order.indexOf(groupId)+1, id);
-                    order.addAll(order.indexOf(id)+1, newLocalIds);
-                }
-                if(!newLocalIds.isEmpty()) {
-                    newIds.addAll(newLocalIds);
-                }
-            }
-            if(found == 0) {
-                break;
-            } else {
-                idsToCheck.addAll(newIds);
-            }
-        }
-    }
-
-    public String getByGroupId(String groupId) throws IOException {
-        ArrayNode moduleResults = findByGroupId(groupId);
-        return filterResultsByLvAndPrint(moduleResults, null);
-    }
-
-    private JsonNode findByGroupIdAndFilter(String groupId, String lv) throws Exception {
-        JsonNode results = findNodeByGroupId(groupId, educations);
-        if(results == null || results.size() == 0) {
-            results = findNodeByGroupId(groupId, modules);
-        }
-        JsonNode filtered = filterResults(results, lv);
-        if(filtered.size() > 1) {
-            logger.warn("uh oh, returning multiple values for " + groupId + " + and " + lv);
-            return findNewestFromFilteredArray(filtered);
-        }
-        return filtered.get(0);
-    }
-
-    private ArrayNode findByGroupId(String groupId) {
-        ArrayNode node = mapper.createArrayNode();
-        ArrayNode moduleResults = findNodeByGroupId(groupId, modules);
-        if(moduleResults != null) {
-            node.addAll(moduleResults);
-        }
-        return moduleResults;
-    }
-
-    public String getByAllIds(List<String> idList, String lv) throws Exception {
-        ArrayNode results = mapper.createArrayNode();
-        for(String id : idList) {
-            JsonNode node = findFromAllById(id);
-            if(node != null) {
-                results.add(node);
-            } else {
-                results.addAll(findByGroupId(id));
-            }
-        }
-        return filterResultsByLvAndPrint(results, lv);
-    }
-
     public String getAvailableLVs(String id) throws Exception {
-        ArrayNode tree = traverseTreeInternal(id);
-        ArrayNode node = mapper.createArrayNode();
-        Set<String> lvs = new TreeSet<>();
-        for(JsonNode mod : tree) {
-            if(mod.has("curriculumPeriodIds")) {
-                for(JsonNode lv : mod.get("curriculumPeriodIds")) {
-                    lvs.add(lv.asText());
-                }
-            }
-        }
-        for(String lv : lvs) {
-            node.add(new TextNode(lv));
-        }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    }
+        JsonNode education = findNodeById(id, educations);
+        JsonNode phase1 = getStudyPhase1(education);
+        String dpId = phase1.get("moduleGroupId").asText();
+        JsonNode degreeProgrammes = findNodeByGroupId(dpId, modules);
 
-    public String getAvailableLVs() throws JsonProcessingException {
-        ArrayNode node = mapper.createArrayNode();
         Set<String> lvs = new TreeSet<>();
-        for(JsonNode mod : modules) {
-            if(mod.has("curriculumPeriodIds")) {
-                for(JsonNode lv : mod.get("curriculumPeriodIds")) {
+        ArrayNode node = mapper.createArrayNode();
+
+        for(JsonNode dp : degreeProgrammes) {
+            if(dp.has("curriculumPeriodIds")) {
+                for(JsonNode lv : dp.get("curriculumPeriodIds")) {
                     lvs.add(lv.asText());
                 }
             }
@@ -311,14 +164,6 @@ public class StudyStructureService extends AbstractService {
             return getTreeFromModule(node, lv);
         }
 
-    }
-
-    private JsonNode findNodeByIdFiltered(String id, String lv) throws Exception {
-        JsonNode node = findFromAllById(id);
-        if(node == null) {
-            return mapper.createObjectNode();
-        }
-        return filterResults(node, lv);
     }
 
     private String getTreeFromModule(JsonNode node, String lv) throws Exception {
@@ -372,7 +217,7 @@ public class StudyStructureService extends AbstractService {
 
     }
 
-    private void handleCourseUnitRule(JsonNode ruleNode, String lv) throws IOException {
+    private void handleCourseUnitRule(JsonNode ruleNode, String lv) throws Exception {
         String groupId = ruleNode.get("courseUnitGroupId").asText();
         JsonNode node = courseService.getCUNameById(groupId, lv);
         if(node == null) {
@@ -382,13 +227,13 @@ public class StudyStructureService extends AbstractService {
         addDataNode((ObjectNode) ruleNode, node);
     }
 
-    private void handleAnyCourseUnitRule(JsonNode ruleNode, String lv) {
+    private void handleAnyCourseUnitRule(JsonNode ruleNode, String lv) throws Exception {
         ObjectNode textNode = mapper.createObjectNode();
         textNode.set("name", new TextNode("anyCourseUnitRule"));
         addDataNode((ObjectNode) ruleNode, textNode);
     }
 
-    private void handleAnyModuleRule(JsonNode ruleNode, String lv) {
+    private void handleAnyModuleRule(JsonNode ruleNode, String lv) throws Exception {
         ObjectNode textNode = mapper.createObjectNode();
         textNode.set("name", new TextNode("anyModuleRule"));
         addDataNode((ObjectNode) ruleNode, textNode);
@@ -416,7 +261,7 @@ public class StudyStructureService extends AbstractService {
         addDataNode((ObjectNode) ruleNode, node);
     }
 
-    private void addDataNode(ObjectNode ruleNode, JsonNode node) {
+    private void addDataNode(ObjectNode ruleNode, JsonNode node) throws Exception {
         if(!filteringEnabled) {
             ruleNode.set("dataNode", node);
             return;
@@ -424,7 +269,7 @@ public class StudyStructureService extends AbstractService {
         ObjectNode filtered = mapper.createObjectNode();
         ObjectNode original = (ObjectNode)node;
         if(original == null) {
-            System.out.println("rip");
+            logger.error("original node is null for ruleNode " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ruleNode));
         }
         Iterator<String> fieldNames = original.fieldNames();
         while(fieldNames.hasNext()) {
@@ -434,29 +279,6 @@ public class StudyStructureService extends AbstractService {
             }
         }
         ruleNode.set("dataNode", filtered);
-    }
-
-
-    private List<String> handleNodeRuleTraverse(JsonNode node) {
-        List<String> newIds = new ArrayList<>();
-        if(!node.has("rule")) {
-            return newIds;
-        }
-        newIds.addAll(readRules(node.get("rule")));
-        return newIds;
-    }
-
-    private List<String> readRules(JsonNode ruleNode) {
-        List<String> newIds = new ArrayList<>();
-        if(ruleNode.has("moduleGroupId")) {
-            newIds.add(ruleNode.get("moduleGroupId").asText());
-        }
-        if(ruleNode.has("rules")) {
-            for (JsonNode rule : ruleNode.get("rules")) {
-                newIds.addAll(readRules(rule));
-            }
-        }
-        return newIds;
     }
 
     public String getTreeByCode(String code, String lv) throws Exception {
@@ -473,15 +295,8 @@ public class StudyStructureService extends AbstractService {
         String groupId = node.get("groupId").asText();
         JsonNode ed = null;
         for(JsonNode education : educations) {
-            JsonNode phase1 = education.get("structure").get("phase1");
-            if(phase1 == null) {
-                continue;
-            }
-            JsonNode lowerDegree = phase1.get("options").get(0);
-            if(lowerDegree == null) {
-                continue;
-            }
-            if(lowerDegree.get("moduleGroupId").asText().equals(groupId)) {
+            JsonNode phase1 = getStudyPhase1(education);
+            if(phase1 != null && phase1.get("moduleGroupId").asText().equals(groupId)) {
                 ed = education;
                 break;
             }
@@ -491,4 +306,29 @@ public class StudyStructureService extends AbstractService {
         }
         return getTree(ed.get("groupId").asText(), lv);
     }
+
+    private JsonNode getStudyPhase1(JsonNode node) {
+        JsonNode phase1 = node.get("structure").get("phase1");
+        if(phase1 == null) {
+            return null;
+        }
+        return phase1.get("options").get(0);
+    }
+
+    public String dataCheck(String lv) throws Exception {
+        try {
+            dataCheck = true;
+            JsonNode educations = mapper.readTree(getEducations()).get("educations");
+            for (JsonNode education : educations) {
+                logger.info("processing " + education.get("code").asText());
+                getTree(education.get("groupId").asText(), lv);
+            }
+            return "duplicates:" + String.join("\r\n", structuralDuplicates) + "\r\n\r\nmissing:\r\n" + String.join("\r\n", missing);
+        } finally {
+            dataCheck = false;
+            structuralDuplicates.clear();
+            missing.clear();
+        }
+    }
+
 }

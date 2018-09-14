@@ -47,6 +47,10 @@ public class CourseService extends AbstractService {
         init = true;
     }
 
+    protected JsonNode find(String id) throws Exception {
+        return openFile(id);
+    }
+
     private JsonNode openFile(String id) throws IOException {
         File file = new File(env.getProperty("data-location") + env.getProperty("course-units-dir") + "/" + id + ".json");
         if(file.isFile()) {
@@ -55,44 +59,8 @@ public class CourseService extends AbstractService {
         return mapper.createArrayNode();
     }
 
-    public JsonNode getCUNameById(String id, String lv) throws IOException {
+    public JsonNode getCUNameById(String id, String lv) throws Exception {
         JsonNode root = openFile(id);
-        JsonNode filtered = filterResults(root, lv);
-        if(filtered.size() > 1) {
-            logger.warn("problem with filtering cus, more than one response: " + id + " / " + lv);
-            return findNewestFromFilteredArray(filtered);
-        }
-        return filtered.get(0);
+        return filterResults(id, root, lv);
     }
-
-    public String getCUNamesByIds(List<String> idList, String lv) throws IOException {
-        ArrayNode array = mapper.createArrayNode();
-        for(String id : idList) {
-            JsonNode root = openFile(id);
-            if(root.isArray()) {
-                array.addAll((ArrayNode)root);
-            }
-        }
-        JsonNode filtered = filterResults(array, lv);
-        array = mapper.createArrayNode();
-        for(JsonNode cu : filtered) {
-            array.add(cu);
-        }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(array);
-    }
-
-//    public String getCUNamesByIds(List<String> idList, String lv) throws IOException {
-//        ArrayNode array = mapper.createArrayNode();
-//        for(JsonNode cu : cus) {
-//            if(idList.contains(cu.get("groupId").asText())) {
-//                array.add(cu);
-//            }
-//        }
-//        JsonNode filtered = filterResults(array, lv);
-//        array = mapper.createArrayNode();
-//        for(JsonNode cu : filtered) {
-//            array.add(cu.get("name"));
-//        }
-//        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(array);
-//    }
 }

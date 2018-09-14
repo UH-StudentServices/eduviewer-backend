@@ -2,10 +2,6 @@
 
 This component is created to serve Sisu education data by entity id / entity group id and study year over a REST api.
 
-NOTE: Implementation comes with a reference React.js frontend, but it should be noted that the API that it uses is from
-prototype and more cumbersome than /api/tree/{id}?lv={lv} and should not be used unless you just want specific
-education / module data from system.
-
 ## Installation and running
 
 1. Get Java (min Java 8)

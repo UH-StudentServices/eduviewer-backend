@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
@@ -22,38 +24,23 @@ import java.time.format.DateTimeFormatter;
 @Service
 public abstract class AbstractService {
 
+    private Logger logger = Logger.getLogger(AbstractService.class);
+
+    protected static boolean dataCheck = false;
+    protected static Set<String> structuralDuplicates = new HashSet<>();
+    protected static Set<String> missing = new HashSet<>();
+
     @Autowired
     protected Environment env;
     protected ObjectMapper mapper = new ObjectMapper();
     protected DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    private JsonNode filterResultByLv(JsonNode response, String lv) throws JsonProcessingException {
-        response = filterByDocumentState(response);
-        if(response == null) {
-            return mapper.createObjectNode();
-        }
-        if(!response.has("curriculumPeriodIds")
-                || response.get("curriculumPeriodIds").size() == 0) {
-            return response;
-        }
-        for(JsonNode lvNode : response.get("curriculumPeriodIds")) {
-            if(lvNode.asText().equals(lv)) {
-                return response;
-            }
-        }
-        return mapper.createObjectNode();
-    }
+    abstract JsonNode find(String id) throws Exception;
 
-    protected JsonNode filterResults(JsonNode results, String lv) throws JsonProcessingException {
+    protected JsonNode filterResults(String id, JsonNode results, String lv) throws Exception {
         ArrayNode filteredResults = mapper.createArrayNode();
-
-
         if(lv == null || lv.isEmpty()) {
-            return filteredResults;
-        }
-
-        if(results.isObject()) {
-            return filterResultByLv(results, lv);
+            return results;
         }
 
         results = filterByDocumentState(results);
@@ -73,7 +60,49 @@ public abstract class AbstractService {
                 }
             }
         }
-        return filteredResults;
+        if(filteredResults.size() > 1) {
+            logDuplicate(filteredResults, lv);
+            return findNewestFromFilteredArray(filteredResults);
+        } else if(filteredResults.size() == 0) {
+            logMissing(id, lv);
+            return mapper.createObjectNode();
+        }
+        return filteredResults.get(0);
+    }
+
+    private void logMissing(String id, String lv) throws Exception {
+        JsonNode results = find(id);
+        String missingData = id + " / " + lv;
+        if(results.size() > 1) {
+            missingData = getAllCodes(results) + " / " + lv;
+        }
+        if(dataCheck) {
+            missing.add(missingData);
+        } else {
+            logger.warn("missing " + missingData);
+        }
+    }
+
+    private void logDuplicate(JsonNode results, String lv) throws Exception {
+        if(!results.get(0).get("id").asText().contains("-CU-")) {
+            return;
+        }
+        String allCodes = getAllCodes(results);
+
+        if(dataCheck) {
+            structuralDuplicates.add(allCodes + " / " + lv);
+        } else {
+            logger.warn("duplicates: " + allCodes + " / " + lv);
+        }
+    }
+
+    private String getAllCodes(JsonNode results) {
+        Set<String> codes = new HashSet<>();
+        for(JsonNode result : results) {
+            String code = result.get("code").asText();
+            codes.add(code);
+        }
+        return String.join(",", codes);
     }
 
     protected JsonNode findNewestFromFilteredArray(JsonNode filtered) {
@@ -109,15 +138,6 @@ public abstract class AbstractService {
             }
             return filtered;
         }
-    }
-
-    protected String filterResultsByLvAndPrint(JsonNode results, String lv) throws IOException {
-        JsonNode result = filterResults(results, lv);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-    }
-
-    private String getLv() {
-        return (String) RequestContextHolder.getRequestAttributes().getAttribute("lv", RequestAttributes.SCOPE_SESSION);
     }
 
     public String getLvNames() throws JsonProcessingException {
