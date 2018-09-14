@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 /**
@@ -238,6 +240,7 @@ public class StudyStructureService extends AbstractService {
         JsonNode filtered = filterResults(results, lv);
         if(filtered.size() > 1) {
             logger.warn("uh oh, returning multiple values for " + groupId + " + and " + lv);
+            return findNewestFromFilteredArray(filtered);
         }
         return filtered.get(0);
     }

@@ -12,6 +12,8 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
@@ -23,6 +25,7 @@ public abstract class AbstractService {
     @Autowired
     protected Environment env;
     protected ObjectMapper mapper = new ObjectMapper();
+    protected DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private JsonNode filterResultByLv(JsonNode response, String lv) throws JsonProcessingException {
         response = filterByDocumentState(response);
@@ -72,6 +75,23 @@ public abstract class AbstractService {
         }
         return filteredResults;
     }
+
+    protected JsonNode findNewestFromFilteredArray(JsonNode filtered) {
+        JsonNode newest = null;
+        for(JsonNode node : filtered) {
+            if(newest == null) {
+                newest = node;
+            } else {
+                LocalDate date = LocalDate.parse(newest.get("validityPeriod").get("startDate").asText());
+                LocalDate newDate = LocalDate.parse(node.get("validityPeriod").get("startDate").asText());
+                if(newDate.isAfter(date)) {
+                    newest = node;
+                }
+            }
+        }
+        return newest;
+    }
+
 
     private JsonNode filterByDocumentState(JsonNode results) {
         if(results.isObject()) {

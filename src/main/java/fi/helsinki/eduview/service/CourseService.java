@@ -59,7 +59,8 @@ public class CourseService extends AbstractService {
         JsonNode root = openFile(id);
         JsonNode filtered = filterResults(root, lv);
         if(filtered.size() > 1) {
-            System.out.println("problem with filtering cus, more than one response: " + id + " / " + lv);
+            logger.warn("problem with filtering cus, more than one response: " + id + " / " + lv);
+            return findNewestFromFilteredArray(filtered);
         }
         return filtered.get(0);
     }
