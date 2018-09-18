@@ -44,6 +44,9 @@ public abstract class AbstractService {
         }
 
         if(results.isObject()) {
+            if(!results.has("curriculumPeriodIds")) {
+                return results;
+            }
             for(JsonNode lvNode : results.get("curriculumPeriodIds")) {
                 if(lvNode.asText().equals(lv)) {
                     return results;
