@@ -70,6 +70,23 @@ public class StudyStructureService extends AbstractService {
         logger.info("init from " + dir + " done");
     }
 
+    public String getById(String id, String lv) throws Exception {
+        JsonNode response = findFromAllById(id);
+        if(response != null) {
+            return filterResultsByLvAndPrint(id, response, lv);
+        }
+        return null;
+    }
+
+    private JsonNode findFromAllById(String id) throws Exception {
+        JsonNode node = findNodeById(id, educations);
+        if(node == null) {
+            node = findNodeById(id, modules);
+        }
+        return node;
+    }
+
+
     private void initToCorrectCollection(JsonNode childNode) {
         if(childNode.get("type").asText().toLowerCase().contains("education")) {
             educations.add(childNode);

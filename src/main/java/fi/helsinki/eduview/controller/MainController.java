@@ -47,6 +47,13 @@ public class MainController {
          return studyService.getEducations();
     }
 
+    @RequestMapping(value = "/api/by_id/{id}", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getStructureById(@PathVariable String id, @RequestParam(required = false) String lv) throws Exception {
+        return studyService.getById(id, lv);
+    }
+
+
     @RequestMapping(value = "/api/tree_by_code/{code}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
     @ResponseBody
     public String getTreeByCode(@PathVariable String code, @RequestParam(required = true) String lv) throws Exception {

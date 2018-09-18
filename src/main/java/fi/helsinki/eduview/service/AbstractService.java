@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -40,6 +41,15 @@ public abstract class AbstractService {
         ArrayNode filteredResults = mapper.createArrayNode();
         if(lv == null || lv.isEmpty()) {
             return results;
+        }
+
+        if(results.isObject()) {
+            for(JsonNode lvNode : results.get("curriculumPeriodIds")) {
+                if(lvNode.asText().equals(lv)) {
+                    return results;
+                }
+            }
+            return null;
         }
 
         results = filterByDocumentState(results);
@@ -87,6 +97,12 @@ public abstract class AbstractService {
             logger.warn("structuralNotActive " + missingData);
         }
     }
+
+    protected String filterResultsByLvAndPrint(String id, JsonNode results, String lv) throws Exception {
+        JsonNode result = filterResults(id, results, lv);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+    }
+
 
     private void logDuplicate(JsonNode results) throws Exception {
         if(!results.get(0).get("id").asText().contains("-CU-")) {
