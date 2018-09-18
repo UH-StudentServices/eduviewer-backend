@@ -254,7 +254,7 @@ public class StudyStructureService extends AbstractService {
         JsonNode node = findByGroupIdAndFilter(moduleGroupId, lv);
 
         if(node == null) {
-            logger.warn("moduleGroupId " + moduleGroupId + " / " + lv + " is missing");
+            logger.warn("moduleGroupId " + moduleGroupId + " / " + lv + " is structuralNotActive");
             return;
         }
         traverseModule(node, lv);
@@ -321,13 +321,17 @@ public class StudyStructureService extends AbstractService {
             JsonNode educations = mapper.readTree(getEducations()).get("educations");
             for (JsonNode education : educations) {
                 logger.info("processing " + education.get("code").asText());
+                educationName = education.get("name").get("fi").asText();
                 getTree(education.get("groupId").asText(), lv);
             }
-            return "duplicates:" + String.join("\r\n", structuralDuplicates) + "\r\n\r\nmissing:\r\n" + String.join("\r\n", missing);
+            return "RAKENTEEN DUPLIKAATIT:" + String.join("\r\n", structuralDuplicates) + "\r\n\r\nRAKENTEEN VIRHETILAT:\r\n" + String.join("\r\n", structuralNotActive)
+                                                            + "\r\n\r\nVIRHETILAISET OPINTOJAKSOT (draft, deleted, pallo puuttuu kokonaan):\r\n" + String.join("\r\n", missingCU);
         } finally {
+            educationName = null;
             dataCheck = false;
             structuralDuplicates.clear();
-            missing.clear();
+            structuralNotActive.clear();
+
         }
     }
 

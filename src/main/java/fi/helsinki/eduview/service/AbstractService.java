@@ -9,10 +9,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -28,7 +25,9 @@ public abstract class AbstractService {
 
     protected static boolean dataCheck = false;
     protected static Set<String> structuralDuplicates = new HashSet<>();
-    protected static Set<String> missing = new HashSet<>();
+    protected static Set<String> structuralNotActive = new HashSet<>();
+    protected static Set<String> missingCU = new HashSet<>();
+    protected static String educationName = null;
 
     @Autowired
     protected Environment env;
@@ -61,38 +60,44 @@ public abstract class AbstractService {
             }
         }
         if(filteredResults.size() > 1) {
-            logDuplicate(filteredResults, lv);
+            logDuplicate(filteredResults);
             return findNewestFromFilteredArray(filteredResults);
         } else if(filteredResults.size() == 0) {
-            logMissing(id, lv);
+            logMissing(id);
             return mapper.createObjectNode();
         }
         return filteredResults.get(0);
     }
 
-    private void logMissing(String id, String lv) throws Exception {
+    private void logMissing(String id) throws Exception {
         JsonNode results = find(id);
-        String missingData = id + " / " + lv;
-        if(results.size() > 1) {
-            missingData = getAllCodes(results) + " / " + lv;
+        String missingData = id + "\t\t" + id;
+        if(results.size() > 0) {
+            missingData = getAllCodes(results)  + "\t\t" + id;
         }
         if(dataCheck) {
-            missing.add(missingData);
+            missingData = missingData + "\t\t" + educationName;
+            if(results.get(0).has("courseUnitType")) {
+
+                missingCU.add(missingData);
+            } else {
+                structuralNotActive.add(missingData);
+            }
         } else {
-            logger.warn("missing " + missingData);
+            logger.warn("structuralNotActive " + missingData);
         }
     }
 
-    private void logDuplicate(JsonNode results, String lv) throws Exception {
+    private void logDuplicate(JsonNode results) throws Exception {
         if(!results.get(0).get("id").asText().contains("-CU-")) {
             return;
         }
         String allCodes = getAllCodes(results);
 
         if(dataCheck) {
-            structuralDuplicates.add(allCodes + " / " + lv);
+            structuralDuplicates.add(allCodes + "\t\t" + results.get(0).get("id").asText() + "\t\t" + educationName);
         } else {
-            logger.warn("duplicates: " + allCodes + " / " + lv);
+            logger.warn("duplicates: " + allCodes);
         }
     }
 
