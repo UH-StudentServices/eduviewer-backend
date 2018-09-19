@@ -348,6 +348,7 @@ public class StudyStructureService extends AbstractService {
             dataCheck = false;
             structuralDuplicates.clear();
             structuralNotActive.clear();
+            missingCU.clear();
 
         }
     }
