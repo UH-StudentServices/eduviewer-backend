@@ -235,13 +235,13 @@ public abstract class AbstractService {
         lvs.put("hy-lv-67",  "2016-17");
         lvs.put("hy-lv-68",  "2017-18");
         lvs.put("hy-lv-69",  "2018-19");
-        lvs.put("hy-lv-70",  "2019-20");
-        lvs.put("hy-lv-71",  "2020-21");
-        lvs.put("hy-lv-72",  "2021-22");
-        lvs.put("hy-lv-73",  "2022-23");
-        lvs.put("hy-lv-74",  "2023-24");
-        lvs.put("hy-lv-75",  "2024-25");
-        lvs.put("hy-lv-76",  "2025-26");
+        lvs.put("hy-lv-70",  "2019-20-ei-käytössä");
+        lvs.put("hy-lv-71",  "2020-21-ei-käytössä");
+        lvs.put("hy-lv-72",  "2021-22-ei-käytössä");
+        lvs.put("hy-lv-73",  "2022-23-ei-käytössä");
+        lvs.put("hy-lv-74",  "2023-24-ei-käytössä");
+        lvs.put("hy-lv-75",  "2024-25-ei-käytössä");
+        lvs.put("hy-lv-76",  "2025-26-ei-käytössä");
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(lvs);
     }
 }
