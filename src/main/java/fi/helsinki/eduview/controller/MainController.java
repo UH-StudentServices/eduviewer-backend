@@ -47,6 +47,12 @@ public class MainController {
          return studyService.getEducations();
     }
 
+    @RequestMapping(value = "/api/coded_educations", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String getCodedEducations() throws Exception {
+        return studyService.getEducationsWithDegreeProgrammeCodes();
+    }
+
     @RequestMapping(value = "/api/by_id/{id}", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getStructureById(@PathVariable String id, @RequestParam(required = false) String lv) throws Exception {

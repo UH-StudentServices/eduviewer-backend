@@ -95,6 +95,36 @@ public class StudyStructureService extends AbstractService {
         }
     }
 
+    public String getEducationsWithDegreeProgrammeCodes() throws Exception {
+        ArrayNode arrayNode = mapper.createArrayNode();
+        List<JsonNode> array = new ArrayList<>();
+        for(JsonNode node : educations) {
+            if(node.get("documentState").asText().equals("ACTIVE")) {
+                array.add(node);
+            }
+        }
+        array.sort(new Comparator<JsonNode>() {
+            @Override
+            public int compare(JsonNode o1, JsonNode o2) {
+                return o1.get("name").get("fi").asText().toLowerCase().compareTo(o2.get("name").get("fi").asText().toLowerCase());
+            }
+        });
+        for(JsonNode edu : array) {
+            JsonNode lowerDegree = edu.get("structure").get("phase1").get("options").get(0);
+            ArrayNode results = findNodesByGroupId(lowerDegree.get("moduleGroupId").asText(), modules);
+            String code = null;
+            for(JsonNode node : results) {
+                if(node.has("code")) {
+                    code = node.get("code").asText();
+                    break;
+                }
+            }
+            ((ObjectNode)edu).set("degreeProgrammeCode", new TextNode(code));
+        }
+        arrayNode.addAll(array);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arrayNode);
+    }
+
     public String getEducations() throws IOException {
         ObjectNode wrapper = mapper.createObjectNode();
         List<JsonNode> array = new ArrayList<>();
@@ -113,11 +143,11 @@ public class StudyStructureService extends AbstractService {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
     }
 
-    private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList) {
-        return findNodeByGroupId(id, nodeList, false);
+    private ArrayNode findNodesByGroupId(String id, List<JsonNode> nodeList) {
+        return findNodesByGroupId(id, nodeList, false);
     }
 
-    private ArrayNode findNodeByGroupId(String id, List<JsonNode> nodeList, boolean acceptAllStates) {
+    private ArrayNode findNodesByGroupId(String id, List<JsonNode> nodeList, boolean acceptAllStates) {
         ArrayNode array = mapper.createArrayNode();
         for(JsonNode child : nodeList) {
             if (child.get("groupId").asText().equals(id) && (acceptAllStates || child.get("documentState").asText().equals("ACTIVE"))) {
@@ -128,13 +158,13 @@ public class StudyStructureService extends AbstractService {
     }
 
     protected JsonNode find(String id) throws Exception {
-        return findNodeByGroupId(id, modules, true);
+        return findNodesByGroupId(id, modules, true);
     }
 
     private JsonNode findByGroupIdAndFilter(String groupId, String lv) throws Exception {
-        JsonNode results = findNodeByGroupId(groupId, educations);
+        JsonNode results = findNodesByGroupId(groupId, educations);
         if(results == null || results.size() == 0) {
-            results = findNodeByGroupId(groupId, modules);
+            results = findNodesByGroupId(groupId, modules);
         }
         return filterResults(groupId, results, lv);
     }
@@ -152,7 +182,7 @@ public class StudyStructureService extends AbstractService {
         JsonNode education = findNodeById(id, educations);
         JsonNode phase1 = getStudyPhase1(education);
         String dpId = phase1.get("moduleGroupId").asText();
-        JsonNode degreeProgrammes = findNodeByGroupId(dpId, modules);
+        JsonNode degreeProgrammes = findNodesByGroupId(dpId, modules);
 
         Set<String> lvs = new TreeSet<>();
         ArrayNode node = mapper.createArrayNode();

@@ -24,6 +24,8 @@ public abstract class AbstractService {
 
     private Logger logger = Logger.getLogger(AbstractService.class);
 
+    protected static String DEFAULT_LV = "hy-lv-69";
+
     protected static boolean dataCheck = false;
     protected static Set<String> structuralDuplicates = new HashSet<>();
     protected static Set<String> structuralNotActive = new HashSet<>();
