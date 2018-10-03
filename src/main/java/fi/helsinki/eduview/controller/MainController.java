@@ -41,6 +41,12 @@ public class MainController {
         return studyService.getAvailableLVs(educationId);
     }
 
+    @RequestMapping(value = "/api/lvs/{degreeProgrammeCode}", produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public String availbleLVByDPCode(@PathVariable String degreeProgrammeCode) throws Exception {
+        return studyService.getAvailableLVsByDPCode(degreeProgrammeCode);
+    }
+
     @RequestMapping(value = "/api/educations", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getEducations() throws Exception {

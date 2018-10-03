@@ -78,6 +78,7 @@ public class StudyStructureService extends AbstractService {
         return null;
     }
 
+
     private JsonNode findFromAllById(String id) throws Exception {
         JsonNode node = findNodeById(id, educations);
         if(node == null) {
@@ -85,7 +86,6 @@ public class StudyStructureService extends AbstractService {
         }
         return node;
     }
-
 
     private void initToCorrectCollection(JsonNode childNode) {
         if(childNode.get("type").asText().toLowerCase().contains("education")) {
@@ -177,6 +177,15 @@ public class StudyStructureService extends AbstractService {
         }
         return null;
     }
+
+    public String getAvailableLVsByDPCode(String degreeProgrammeCode) throws Exception {
+        JsonNode node = getDegreeProgrammeNode(degreeProgrammeCode);
+        if(node != null) {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node.get("curriculumPeriodIds"));
+        }
+        return "[]";
+    }
+
 
     public String getAvailableLVs(String id) throws Exception {
         JsonNode education = findNodeById(id, educations);
@@ -328,26 +337,34 @@ public class StudyStructureService extends AbstractService {
         ruleNode.set("dataNode", filtered);
     }
 
-    public String getTreeByCode(String code, String lv) throws Exception {
-        JsonNode node = null;
-        for(JsonNode module : modules) {
-            if(module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())) {
-                node = module;
-                break;
-            }
+    private JsonNode getEducationByCode(String code) throws Exception {
+        JsonNode degreeProgramme = getDegreeProgrammeNode(code);
+
+        if(degreeProgramme == null) {
+            return null;
         }
-        if(node == null) {
-            return "{}";
-        }
-        String groupId = node.get("groupId").asText();
-        JsonNode ed = null;
+
+        String groupId = degreeProgramme.get("groupId").asText();
         for(JsonNode education : educations) {
             JsonNode phase1 = getStudyPhase1(education);
             if(phase1 != null && phase1.get("moduleGroupId").asText().equals(groupId)) {
-                ed = education;
-                break;
+                return education;
             }
         }
+        return null;
+    }
+
+    private JsonNode getDegreeProgrammeNode(String code) {
+        for(JsonNode module : modules) {
+            if(module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())) {
+                return module;
+            }
+        }
+        return null;
+    }
+
+    public String getTreeByCode(String code, String lv) throws Exception {
+        JsonNode ed = getEducationByCode(code);
         if(ed == null) {
             return "{}";
         }
@@ -381,5 +398,4 @@ public class StudyStructureService extends AbstractService {
             missingCU.clear();
         }
     }
-
 }
