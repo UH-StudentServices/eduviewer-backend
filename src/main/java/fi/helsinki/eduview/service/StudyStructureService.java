@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -21,7 +23,7 @@ import java.util.*;
  * @date: 04/01/2018
  */
 @Service
-public class StudyStructureService extends AbstractService {
+public class StudyStructureService extends AbstractDataService {
 
     private Logger logger = LogManager.getLogger(StudyStructureService.class);
 
@@ -380,7 +382,28 @@ public class StudyStructureService extends AbstractService {
         return phase1.get("options").get(0);
     }
 
-    public String dataCheck(String lv) throws Exception {
+    public String getDataReport() {
+        return "Aloitettu: " + startDate.toString() + "\r\n\r\n" + buildReportString();
+    }
+
+    @Async
+    public String runDataCheckAsync(String lv) throws Exception {
+        if(dataCheck) {
+            return "already running, started on " + startDate;
+        }
+        dataCheck(lv);
+        return "started on " + new Date().toString();
+    }
+
+    protected String dataCheck(String lv) throws Exception {
+        startDate = new Date();
+        educationName = null;
+        structuralDuplicates.clear();
+        structuralNotActive.clear();
+        missingCU.clear();
+        if(dataCheck) {
+            return "not started";
+        }
         try {
             dataCheck = true;
             JsonNode educations = mapper.readTree(getEducations()).get("educations");
@@ -389,14 +412,17 @@ public class StudyStructureService extends AbstractService {
                 educationName = education.get("name").get("fi").asText();
                 getTree(education.get("groupId").asText(), lv);
             }
-            return "RAKENTEEN DUPLIKAATIT:" + String.join("\r\n", structuralDuplicates) + "\r\n\r\nRAKENTEEN VIRHETILAT:\r\n" + String.join("\r\n", structuralNotActive)
-                                                            + "\r\n\r\nVIRHETILAISET OPINTOJAKSOT (draft, deleted, pallo puuttuu kokonaan):\r\n" + String.join("\r\n", missingCU);
+            return buildReportString();
+        } catch(Exception e) {
+            logger.error("Error in datacheck", e);
         } finally {
-            educationName = null;
             dataCheck = false;
-            structuralDuplicates.clear();
-            structuralNotActive.clear();
-            missingCU.clear();
         }
+        return null;
+    }
+
+    private String buildReportString() {
+        return "RAKENTEEN DUPLIKAATIT:" + String.join("\r\n", structuralDuplicates) + "\r\n\r\nRAKENTEEN VIRHETILAT:\r\n" + String.join("\r\n", structuralNotActive)
+                                                        + "\r\n\r\nVIRHETILAISET OPINTOJAKSOT (draft, deleted, pallo puuttuu kokonaan):\r\n" + String.join("\r\n", missingCU);
     }
 }

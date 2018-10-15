@@ -2,7 +2,6 @@ package fi.helsinki.eduview.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ import java.util.List;
  * @date: 14/01/2018
  */
 @Service
-public class CourseService extends AbstractService {
+public class CourseService extends AbstractDataService {
 
     private Logger logger = LogManager.getLogger(CourseService.class);
 

@@ -78,13 +78,26 @@ public class MainController {
         return studyService.getTree(id, lv);
     }
 
+    @RequestMapping(value = "/api/data_view/", produces = "text/plain; charset=utf-8")
+    @ResponseBody
+    public String dataView(@RequestParam(required = false) String salasana) {
+        if(checkPassword(salasana)) {
+            return studyService.getDataReport();
+        }
+        return "";
+    }
+
     @RequestMapping(value = "/api/data_check/{lv}", produces = "text/plain; charset=utf-8")
     @ResponseBody
     public String dataCheck(@PathVariable String lv, @RequestParam(required = false) String salasana) throws Exception {
-        if(salasana != null && salasana.equals("monnitiskaamonnikuivaa")) {
-            return studyService.dataCheck(lv);
+        if(checkPassword(salasana)) {
+            return studyService.runDataCheckAsync(lv);
         }
         return "";
+    }
+
+    private boolean checkPassword(@RequestParam(required = false) String salasana) {
+        return salasana != null && salasana.equals("monnitiskaamonnikuivaa");
     }
 
 }

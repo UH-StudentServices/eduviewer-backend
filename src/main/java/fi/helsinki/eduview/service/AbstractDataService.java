@@ -4,14 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -21,9 +19,9 @@ import java.util.*;
  * @date: 14/01/2018
  */
 @Service
-public abstract class AbstractService {
+public abstract class AbstractDataService {
 
-    private Logger logger = LogManager.getLogger(AbstractService.class);
+    private Logger logger = LogManager.getLogger(AbstractDataService.class);
 
     protected static String DEFAULT_LV = "hy-lv-69";
 
@@ -32,9 +30,9 @@ public abstract class AbstractService {
     protected static Set<String> structuralNotActive = new HashSet<>();
     protected static Set<String> missingCU = new HashSet<>();
     protected static String educationName = null;
+    protected static Date startDate = null;
 
-    @Autowired
-    protected Environment env;
+    @Autowired protected Environment env;
     protected ObjectMapper mapper = new ObjectMapper();
     protected DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
@@ -168,7 +166,12 @@ public abstract class AbstractService {
     }
 
     public String getLvNames() throws JsonProcessingException {
-        ObjectNode lvs = mapper.createObjectNode();
+        Map<String, String> lvs = generateLvMap();
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(lvs);
+    }
+
+    protected Map<String, String> generateLvMap() {
+        Map<String, String> lvs = new LinkedHashMap<>();
         lvs.put("hy-lv-1", "1950-51");
         lvs.put("hy-lv-2", "1951-52");
         lvs.put("hy-lv-3", "1952-53");
@@ -245,6 +248,6 @@ public abstract class AbstractService {
         lvs.put("hy-lv-74",  "2023-24-ei-käytössä");
         lvs.put("hy-lv-75",  "2024-25-ei-käytössä");
         lvs.put("hy-lv-76",  "2025-26-ei-käytössä");
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(lvs);
+        return lvs;
     }
 }
