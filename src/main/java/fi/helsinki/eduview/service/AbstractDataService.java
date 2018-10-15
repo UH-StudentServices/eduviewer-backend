@@ -26,9 +26,9 @@ public abstract class AbstractDataService {
     protected static String DEFAULT_LV = "hy-lv-69";
 
     protected static boolean dataCheck = false;
-    protected static Set<String> structuralDuplicates = new HashSet<>();
-    protected static Set<String> structuralNotActive = new HashSet<>();
-    protected static Set<String> missingCU = new HashSet<>();
+    protected static Set<String> structuralDuplicates = new LinkedHashSet<>();
+    protected static Set<String> structuralNotActive = new LinkedHashSet<>();
+    protected static Set<String> missingCU = new LinkedHashSet<>();
     protected static String educationName = null;
     protected static Date startDate = null;
 

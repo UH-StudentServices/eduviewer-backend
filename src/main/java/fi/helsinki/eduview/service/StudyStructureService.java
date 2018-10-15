@@ -383,7 +383,7 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     public String getDataReport() {
-        return "Aloitettu: " + startDate.toString() + "\r\n\r\n" + buildReportString();
+        return (dataCheck ? "KÄYNNISSÄ\r\n\r\n" : "") + "Aloitettu: " + startDate.toString() + "\r\n\r\n" + buildReportString();
     }
 
     @Async
@@ -412,6 +412,7 @@ public class StudyStructureService extends AbstractDataService {
                 educationName = education.get("name").get("fi").asText();
                 getTree(education.get("groupId").asText(), lv);
             }
+            dataCheck = false;
             return buildReportString();
         } catch(Exception e) {
             logger.error("Error in datacheck", e);
