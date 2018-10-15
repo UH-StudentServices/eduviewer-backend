@@ -4,13 +4,14 @@ package fi.helsinki.eduview.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
 import static org.mockito.Matchers.any;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class StudyStructureServiceTest {
 
-    private Logger logger = Logger.getLogger(StudyStructureServiceTest.class);
+    private Logger logger = LogManager.getLogger(StudyStructureServiceTest.class);
 
     @InjectMocks
     private StudyStructureService service;

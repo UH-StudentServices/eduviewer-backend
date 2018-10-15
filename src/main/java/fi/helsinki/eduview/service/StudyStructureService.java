@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ import java.util.*;
 @Service
 public class StudyStructureService extends AbstractService {
 
-    private Logger logger = Logger.getLogger(StudyStructureService.class);
+    private Logger logger = LogManager.getLogger(StudyStructureService.class);
 
     @Autowired private CourseService courseService;
 

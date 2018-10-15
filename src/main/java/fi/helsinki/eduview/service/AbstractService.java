@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ import java.util.*;
 @Service
 public abstract class AbstractService {
 
-    private Logger logger = Logger.getLogger(AbstractService.class);
+    private Logger logger = LogManager.getLogger(AbstractService.class);
 
     protected static String DEFAULT_LV = "hy-lv-69";
 
