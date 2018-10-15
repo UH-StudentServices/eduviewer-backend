@@ -100,19 +100,11 @@ public class StudyStructureService extends AbstractDataService {
 
     public String getEducationsWithDegreeProgrammeCodes() throws Exception {
         ArrayNode arrayNode = mapper.createArrayNode();
-        List<JsonNode> array = new ArrayList<>();
-        for(JsonNode node : educations) {
-            if(node.get("documentState").asText().equals("ACTIVE")) {
-                array.add(node);
+        List<JsonNode> edus = new ArrayList<>();
+        for(JsonNode edu : educations) {
+            if(!edu.get("documentState").asText().equals("ACTIVE")) {
+                continue;
             }
-        }
-        array.sort(new Comparator<JsonNode>() {
-            @Override
-            public int compare(JsonNode o1, JsonNode o2) {
-                return o1.get("name").get("fi").asText().toLowerCase().compareTo(o2.get("name").get("fi").asText().toLowerCase());
-            }
-        });
-        for(JsonNode edu : array) {
             JsonNode lowerDegree = edu.get("structure").get("phase1").get("options").get(0);
             ArrayNode results = findNodesByGroupId(lowerDegree.get("moduleGroupId").asText(), modules);
             String code = null;
@@ -122,9 +114,15 @@ public class StudyStructureService extends AbstractDataService {
                     break;
                 }
             }
-            ((ObjectNode)edu).set("degreeProgrammeCode", new TextNode(code));
+            ObjectNode minimizedNode = mapper.createObjectNode();
+            minimizedNode.set("name", edu.get("name"));
+            minimizedNode.set("degreeProgrammeCode", new TextNode(code));
+            edus.add(minimizedNode);
         }
-        arrayNode.addAll(array);
+        edus.sort((o1, o2) ->
+                o1.get("name").get("fi").asText().toLowerCase().compareTo(o2.get("name").get("fi").asText().toLowerCase()));
+
+        arrayNode.addAll(edus);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arrayNode);
     }
 
