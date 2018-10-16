@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @date: 20/02/2018
  */
 @Configuration
-@PropertySource("classpath:edu.properties")
+@PropertySource("file:${ext.properties}")
 @EnableScheduling
 public class Config {
 
