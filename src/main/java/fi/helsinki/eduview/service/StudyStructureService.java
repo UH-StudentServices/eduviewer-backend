@@ -1,6 +1,7 @@
 package fi.helsinki.eduview.service;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -123,7 +124,7 @@ public class StudyStructureService extends AbstractDataService {
                 o1.get("name").get("fi").asText().toLowerCase().compareTo(o2.get("name").get("fi").asText().toLowerCase()));
 
         arrayNode.addAll(edus);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(arrayNode);
+        return printJson(arrayNode);
     }
 
     public String getEducations() throws IOException {
@@ -141,7 +142,7 @@ public class StudyStructureService extends AbstractDataService {
             }
         });
         wrapper.putArray("educations").addAll(array);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrapper);
+        return printJson(wrapper);
     }
 
     private ArrayNode findNodesByGroupId(String id, List<JsonNode> nodeList) {
@@ -182,11 +183,14 @@ public class StudyStructureService extends AbstractDataService {
     public String getAvailableLVsByDPCode(String degreeProgrammeCode) throws Exception {
         JsonNode node = getDegreeProgrammeNode(degreeProgrammeCode);
         if(node != null) {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node.get("curriculumPeriodIds"));
+            return printJson(node.get("curriculumPeriodIds"));
         }
         return "[]";
     }
 
+    private String printJson(JsonNode node) throws JsonProcessingException {
+        return mapper.writeValueAsString(node);
+    }
 
     public String getAvailableLVs(String id) throws Exception {
         JsonNode education = findNodeById(id, educations);
@@ -207,13 +211,13 @@ public class StudyStructureService extends AbstractDataService {
         for(String lv : lvs) {
             node.add(new TextNode(lv));
         }
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        return printJson(node);
     }
 
     public String getTree(String id, String lv) throws Exception {
         JsonNode node = findByGroupIdAndFilter(id, lv);
         if(node == null) {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.createObjectNode());
+            return printJson(mapper.createObjectNode());
         }
         if(node.get("type").asText().equals("Education")) {
             return getTreeFromEducation(node, lv);
@@ -225,7 +229,7 @@ public class StudyStructureService extends AbstractDataService {
 
     private String getTreeFromModule(JsonNode node, String lv) throws Exception {
         traverseModule(node, lv);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        return printJson(node);
     }
 
     private String getTreeFromEducation(JsonNode node, String lv) throws Exception {
@@ -237,7 +241,7 @@ public class StudyStructureService extends AbstractDataService {
             firstModule = mapper.createObjectNode();
         }
         addDataNode((ObjectNode)node, firstModule);
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        return printJson(node);
     }
 
     private void traverseModule(JsonNode node, String lv) throws Exception {
@@ -326,7 +330,7 @@ public class StudyStructureService extends AbstractDataService {
         ObjectNode filtered = mapper.createObjectNode();
         ObjectNode original = (ObjectNode)node;
         if(original == null) {
-            logger.error("original node is null for ruleNode " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ruleNode));
+            logger.error("original node is null for ruleNode " + printJson(ruleNode));
         }
         Iterator<String> fieldNames = original.fieldNames();
         while(fieldNames.hasNext()) {
