@@ -1,3 +1,20 @@
+/*
+ * This file is part of Eduviewer application.
+ *
+ * Eduviewer application is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Eduviewer application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Eduviewer application.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package fi.helsinki.eduview.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,10 +31,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/**
- * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
- * @date: 14/01/2018
- */
 @Service
 public abstract class AbstractDataService {
 
@@ -40,16 +53,16 @@ public abstract class AbstractDataService {
 
     protected JsonNode filterResults(String id, JsonNode results, String lv) throws Exception {
         ArrayNode filteredResults = mapper.createArrayNode();
-        if(lv == null || lv.isEmpty()) {
+        if (lv == null || lv.isEmpty()) {
             return results;
         }
 
-        if(results.isObject()) {
-            if(!results.has("curriculumPeriodIds")) {
+        if (results.isObject()) {
+            if (!results.has("curriculumPeriodIds")) {
                 return results;
             }
-            for(JsonNode lvNode : results.get("curriculumPeriodIds")) {
-                if(lvNode.asText().equals(lv)) {
+            for (JsonNode lvNode : results.get("curriculumPeriodIds")) {
+                if (lvNode.asText().equals(lv)) {
                     return results;
                 }
             }
@@ -58,25 +71,25 @@ public abstract class AbstractDataService {
 
         results = filterByDocumentState(results);
 
-        for(JsonNode node : results) {
-            if(!node.has("curriculumPeriodIds")) {
+        for (JsonNode node : results) {
+            if (!node.has("curriculumPeriodIds")) {
                 filteredResults.add(node);
                 continue;
             }
-            if(node.get("curriculumPeriodIds").size() == 0) {
+            if (node.get("curriculumPeriodIds").size() == 0) {
                 filteredResults.add(node);
             }
-            for(JsonNode lvNode : node.get("curriculumPeriodIds")) {
-                if(lvNode.asText().equals(lv)) {
+            for (JsonNode lvNode : node.get("curriculumPeriodIds")) {
+                if (lvNode.asText().equals(lv)) {
                     filteredResults.add(node);
                     break;
                 }
             }
         }
-        if(filteredResults.size() > 1) {
+        if (filteredResults.size() > 1) {
             logDuplicate(filteredResults);
             return findNewestFromFilteredArray(filteredResults);
-        } else if(filteredResults.size() == 0) {
+        } else if (filteredResults.size() == 0) {
             logMissing(id);
             return mapper.createObjectNode();
         }
@@ -86,13 +99,12 @@ public abstract class AbstractDataService {
     private void logMissing(String id) throws Exception {
         JsonNode results = find(id);
         String missingData = id + "\t\t" + id;
-        if(results.size() > 0) {
+        if (results.size() > 0) {
             missingData = getAllCodes(results)  + "\t\t" + id;
         }
-        if(dataCheck) {
+        if (dataCheck) {
             missingData = missingData + "\t\t" + educationName;
-            if(results.get(0).has("courseUnitType")) {
-
+            if (results.get(0).has("courseUnitType")) {
                 missingCU.add(missingData);
             } else {
                 structuralNotActive.add(missingData);
@@ -107,14 +119,13 @@ public abstract class AbstractDataService {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
     }
 
-
     private void logDuplicate(JsonNode results) throws Exception {
-        if(!results.get(0).get("id").asText().contains("-CU-")) {
+        if (!results.get(0).get("id").asText().contains("-CU-")) {
             return;
         }
         String allCodes = getAllCodes(results);
 
-        if(dataCheck) {
+        if (dataCheck) {
             structuralDuplicates.add(allCodes + "\t\t" + results.get(0).get("id").asText() + "\t\t" + educationName);
         } else {
             logger.warn("duplicates: " + allCodes);
@@ -123,7 +134,7 @@ public abstract class AbstractDataService {
 
     private String getAllCodes(JsonNode results) {
         Set<String> codes = new HashSet<>();
-        for(JsonNode result : results) {
+        for (JsonNode result : results) {
             String code = result.get("code").asText();
             codes.add(code);
         }
@@ -132,13 +143,13 @@ public abstract class AbstractDataService {
 
     protected JsonNode findNewestFromFilteredArray(JsonNode filtered) {
         JsonNode newest = null;
-        for(JsonNode node : filtered) {
-            if(newest == null) {
+        for (JsonNode node : filtered) {
+            if (newest == null) {
                 newest = node;
             } else {
                 LocalDate date = LocalDate.parse(newest.get("validityPeriod").get("startDate").asText());
                 LocalDate newDate = LocalDate.parse(node.get("validityPeriod").get("startDate").asText());
-                if(newDate.isAfter(date)) {
+                if (newDate.isAfter(date)) {
                     newest = node;
                 }
             }
@@ -146,9 +157,8 @@ public abstract class AbstractDataService {
         return newest;
     }
 
-
     private JsonNode filterByDocumentState(JsonNode results) {
-        if(results.isObject()) {
+        if (results.isObject()) {
             if (!results.get("documentState").asText().equals("ACTIVE")) {
                 return null;
             }
