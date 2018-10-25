@@ -1,25 +1,28 @@
+/*
+ * This file is part of Eduviewer application.
+ *
+ * Eduviewer application is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Eduviewer application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Eduviewer application.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package fi.helsinki.eduview.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import fi.helsinki.eduview.service.CourseService;
 import fi.helsinki.eduview.service.StudyStructureService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-/**
- * @author: Hannu-Pekka Rajaniemi (h-p@iki.fi)
- * @date: 04/01/2018
- */
 @Controller
 public class MainController {
 
@@ -50,7 +53,7 @@ public class MainController {
     @RequestMapping(value = "/api/educations", produces = "application/json; charset=utf-8")
     @ResponseBody
     public String getEducations() throws Exception {
-         return studyService.getEducations();
+        return studyService.getEducations();
     }
 
     @RequestMapping(value = "/api/coded_educations", produces = "application/json; charset=utf-8")
@@ -64,7 +67,6 @@ public class MainController {
     public String getStructureById(@PathVariable String id, @RequestParam(required = false) String lv) throws Exception {
         return studyService.getById(id, lv);
     }
-
 
     @RequestMapping(value = "/api/tree_by_code/{code}", produces = "application/json; charset=utf-8", method = RequestMethod.GET)
     @ResponseBody
@@ -81,7 +83,7 @@ public class MainController {
     @RequestMapping(value = "/api/data_view/", produces = "text/plain; charset=utf-8")
     @ResponseBody
     public String dataView(@RequestParam(required = false) String salasana) {
-        if(checkPassword(salasana)) {
+        if (checkPassword(salasana)) {
             return studyService.getDataReport();
         }
         return "";
@@ -90,7 +92,7 @@ public class MainController {
     @RequestMapping(value = "/api/data_check/{lv}", produces = "text/plain; charset=utf-8")
     @ResponseBody
     public String dataCheck(@PathVariable String lv, @RequestParam(required = false) String salasana) throws Exception {
-        if(checkPassword(salasana)) {
+        if (checkPassword(salasana)) {
             return studyService.runDataCheckAsync(lv);
         }
         return "";

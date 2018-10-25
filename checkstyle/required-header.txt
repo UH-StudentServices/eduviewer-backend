@@ -14,15 +14,3 @@
  * You should have received a copy of the GNU General Public License
  * along with Eduviewer application.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-package fi.helsinki.eduview;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-@SpringBootApplication
-public class EduviewApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EduviewApplication.class, args);
-    }
-}

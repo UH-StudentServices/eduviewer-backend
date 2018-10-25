@@ -1,3 +1,20 @@
+/*
+ * This file is part of Eduviewer application.
+ *
+ * Eduviewer application is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Eduviewer application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Eduviewer application.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package fi.helsinki.eduview.service;
 
 import org.apache.logging.log4j.LogManager;
@@ -7,19 +24,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-/**
- * @author: hpr
- * @date: 12/10/2018
- */
 @Service
 public class EmailService {
 
@@ -36,10 +47,10 @@ public class EmailService {
         String message = "";
         String subject = "Eduviewer: Yöajo lukuvuosille " + Arrays.stream(lvs.split(",")).map(lvNames::get).collect(Collectors.joining(", "));
         try {
-            for(String lv : lvs.split(",")) {
+            for (String lv : lvs.split(",")) {
                 message += lvNames.get(lv.trim()) + "\r\n\r\n" + studyStructureService.dataCheck(lv) + "\r\n\r\n";
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             message = "Error while generating report: " + e.getMessage();
         } finally {
             try {
@@ -49,7 +60,7 @@ public class EmailService {
                 mail.setText(message);
                 mail.setSubject(subject);
                 javaMailSender.send(mail);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 logger.error("error creating nightly email", e);
             }
         }
