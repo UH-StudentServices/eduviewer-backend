@@ -20,6 +20,7 @@ package fi.helsinki.eduview.controller;
 import fi.helsinki.eduview.service.CourseService;
 import fi.helsinki.eduview.service.StudyStructureService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,9 @@ public class MainController {
 
     @Autowired
     private CourseService courseService;
+
+    @Autowired
+    private Environment env;
 
     @RequestMapping(value = "/api/lv_names", produces = "application/json; charset=utf-8")
     @ResponseBody
@@ -99,7 +103,8 @@ public class MainController {
     }
 
     private boolean checkPassword(@RequestParam(required = false) String salasana) {
-        return salasana != null && salasana.equals("monnitiskaamonnikuivaa");
+        String password = env.getProperty("reports-password");
+        return password != null && salasana != null && salasana.equals(password);
     }
 
 }
