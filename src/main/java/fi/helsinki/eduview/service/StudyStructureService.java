@@ -59,6 +59,10 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     private void initAllFilesFromSameDirectory(ObjectMapper mapper, String dir) throws IOException {
+        if(!new File(dir).exists()) {
+            logger.warn("directory: " + dir + " does not exist");
+            return;
+        }
         for (File file : new File(dir).listFiles()) {
             try {
                 JsonNode root = mapper.readTree(Files.readAllBytes(file.toPath()));

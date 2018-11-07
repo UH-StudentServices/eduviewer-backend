@@ -91,7 +91,7 @@ public abstract class AbstractDataService {
             return findNewestFromFilteredArray(filteredResults);
         } else if (filteredResults.size() == 0) {
             logMissing(id);
-            return mapper.createObjectNode();
+            return null;
         }
         return filteredResults.get(0);
     }
