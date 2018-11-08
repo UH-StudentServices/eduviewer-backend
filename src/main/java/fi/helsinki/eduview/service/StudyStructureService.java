@@ -366,7 +366,7 @@ public class StudyStructureService extends AbstractDataService {
     private JsonNode getDegreeProgrammeNode(String code) {
         for (JsonNode module : modules) {
             if (module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())
-                    && module.get("DocumentState").asText().equals("ACTIVE")) {
+                    && module.get("documentState").asText().equals("ACTIVE")) {
                 return module;
             }
         }
