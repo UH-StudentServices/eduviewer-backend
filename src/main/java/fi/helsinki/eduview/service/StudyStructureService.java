@@ -111,6 +111,9 @@ public class StudyStructureService extends AbstractDataService {
             if (!edu.get("documentState").asText().equals("ACTIVE")) {
                 continue;
             }
+            if(edu.get("code").asText().equals("KM-HISTORIA-KOUL")) {
+                logger.info("debug time");
+            }
             JsonNode lowerDegree = edu.get("structure").get("phase1").get("options").get(0);
             ArrayNode results = findNodesByGroupId(lowerDegree.get("moduleGroupId").asText(), modules);
             String code = null;
@@ -362,7 +365,8 @@ public class StudyStructureService extends AbstractDataService {
 
     private JsonNode getDegreeProgrammeNode(String code) {
         for (JsonNode module : modules) {
-            if (module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())) {
+            if (module.has("code") && module.get("code").asText().toUpperCase().equals(code.toUpperCase())
+                    && module.get("DocumentState").asText().equals("ACTIVE")) {
                 return module;
             }
         }
