@@ -39,11 +39,10 @@ public class StudyStructureServiceTest {
     public void init() throws Exception {
         ObjectNode node = mapper.createObjectNode();
         node.set("name", new TextNode("testnode"));
-        when(courseService.getCUNameById(any(), any())).thenReturn(node);
-        when(environment.getProperty(eq("data-location"), any(String.class))).thenReturn("../data/");
-        when(environment.getProperty(eq("course-units-dir"), any(String.class))).thenReturn("kori-course-units");
+//        when(courseService.getCUNameById(any(), any())).thenReturn(node);
+        when(environment.getProperty(eq("data-location"), any(String.class))).thenReturn("../vefedata/");
+//        when(environment.getProperty(eq("course-units-dir"), any(String.class))).thenReturn("kori-course-units");
         when(environment.getProperty(eq("modules-dir"), any(String.class))).thenReturn("modules");
-        when(environment.getProperty(eq("degree-programmes-dir"), any(String.class))).thenReturn("modules");
         when(environment.getProperty(eq("educations-dir"), any(String.class))).thenReturn("educations");
 
         service.init();

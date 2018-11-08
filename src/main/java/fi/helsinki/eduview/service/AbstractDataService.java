@@ -91,7 +91,7 @@ public abstract class AbstractDataService {
             return findNewestFromFilteredArray(filteredResults);
         } else if (filteredResults.size() == 0) {
             logMissing(id);
-            return mapper.createObjectNode();
+            return null;
         }
         return filteredResults.get(0);
     }
@@ -251,7 +251,7 @@ public abstract class AbstractDataService {
         lvs.put("hy-lv-67",  "2016-17");
         lvs.put("hy-lv-68",  "2017-18");
         lvs.put("hy-lv-69",  "2018-19");
-        lvs.put("hy-lv-70",  "2019-20-ei-käytössä");
+        lvs.put("hy-lv-70",  "2019-20");
         lvs.put("hy-lv-71",  "2020-21-ei-käytössä");
         lvs.put("hy-lv-72",  "2021-22-ei-käytössä");
         lvs.put("hy-lv-73",  "2022-23-ei-käytössä");
