@@ -31,10 +31,13 @@ public class MainController {
     private StudyStructureService studyService;
 
     @Autowired
-    private CourseService courseService;
-
-    @Autowired
     private Environment env;
+
+    @RequestMapping(value = "/api/status", produces = "text/plain")
+    @ResponseBody
+    public String getStatus() {
+        return "OK";
+    }
 
     @RequestMapping(value = "/api/lv_names", produces = "application/json; charset=utf-8")
     @ResponseBody
