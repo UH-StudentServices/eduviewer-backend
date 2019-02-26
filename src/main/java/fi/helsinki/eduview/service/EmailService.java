@@ -41,6 +41,10 @@ public class EmailService {
     @Autowired private JavaMailSender javaMailSender;
 
     public void generateNightlyReportMail() {
+        String enabled = env.getProperty("nightly-report-enabled", "false");
+        if(enabled.equalsIgnoreCase("false")) {
+            return;
+        }
         logger.info("generating nightly report");
         Map<String, String> lvNames = studyStructureService.generateLvMap();
         String lvs = env.getProperty("nightly-report-lvs");
