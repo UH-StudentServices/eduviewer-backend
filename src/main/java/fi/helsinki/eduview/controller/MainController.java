@@ -17,7 +17,6 @@
 
 package fi.helsinki.eduview.controller;
 
-import fi.helsinki.eduview.service.CourseService;
 import fi.helsinki.eduview.service.StudyStructureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;

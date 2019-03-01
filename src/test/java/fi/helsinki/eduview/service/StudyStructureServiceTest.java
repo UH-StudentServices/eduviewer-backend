@@ -45,7 +45,6 @@ public class StudyStructureServiceTest {
         when(environment.getProperty(eq("modules-dir"), any(String.class))).thenReturn("modules");
         when(environment.getProperty(eq("educations-dir"), any(String.class))).thenReturn("educations");
 
-        service.init();
     }
 
     @Test
