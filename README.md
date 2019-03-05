@@ -15,10 +15,10 @@ This component is created to serve Sisu education data by entity id / entity gro
 
 In external properties use property
 
-backend-type=FS|Postgres to control source of where data is fetched from.
+backend-type=<FS|Postgres> to control source of where data is fetched from.
 
-It's possible to extend the Service system to implement your own backends. You need to implement CourseService
-or
+It's possible to extend the Service system to implement your own backends. You need to implement CourseData and StructureData sources
+as per examples (for example StudyDataFS, CourseDataFS) and use the same switch to work with those.
 
 ### Data in Filesystem
 
