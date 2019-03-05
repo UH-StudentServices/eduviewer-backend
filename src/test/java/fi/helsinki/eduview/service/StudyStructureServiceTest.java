@@ -4,6 +4,7 @@ package fi.helsinki.eduview.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import fi.helsinki.eduview.service.course.CourseDataFS;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
@@ -30,7 +31,7 @@ public class StudyStructureServiceTest {
     @InjectMocks
     private StudyStructureService service;
 
-    @Mock private CourseService courseService;
+    @Mock private CourseDataFS courseService;
     @Mock private Environment environment;
 
     ObjectMapper mapper = new ObjectMapper();
@@ -39,7 +40,7 @@ public class StudyStructureServiceTest {
     public void init() throws Exception {
         ObjectNode node = mapper.createObjectNode();
         node.set("name", new TextNode("testnode"));
-//        when(courseService.getCUNameById(any(), any())).thenReturn(node);
+//        when(courseService.findCourseUnitByGroupId(any(), any())).thenReturn(node);
         when(environment.getProperty(eq("data-location"), any(String.class))).thenReturn("../vefedata/");
 //        when(environment.getProperty(eq("course-units-dir"), any(String.class))).thenReturn("kori-course-units");
         when(environment.getProperty(eq("modules-dir"), any(String.class))).thenReturn("modules");

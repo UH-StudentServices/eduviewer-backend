@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import fi.helsinki.eduview.service.data.StudyData;
-import fi.helsinki.eduview.service.data.StudyDataFS;
+import fi.helsinki.eduview.service.course.CourseData;
+import fi.helsinki.eduview.service.structure.StructureData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +40,8 @@ public class StudyStructureService extends AbstractDataService {
 
     private Logger logger = LogManager.getLogger(StudyStructureService.class);
 
-    @Autowired private CourseService courseService;
-
-    @Autowired @Resource(name="studyDataPostgres") private StudyData studyData;
+    @Autowired @Resource(name="courseData${backend-type}") private CourseData courseData;
+    @Autowired @Resource(name="structureData${backend-type}") private StructureData structureData;
 
     private ObjectMapper mapper = new ObjectMapper();
     private List<String> whitelisted = Arrays.asList("name", "id", "groupId", "rule", "code", "credits", "targetCredits");
@@ -50,9 +49,9 @@ public class StudyStructureService extends AbstractDataService {
     public String getEducationsWithDegreeProgrammeCodes() throws Exception {
         ArrayNode arrayNode = mapper.createArrayNode();
         List<JsonNode> edus = new ArrayList<>();
-        for (JsonNode edu : studyData.getEducations()) {
+        for (JsonNode edu : structureData.getEducations()) {
             JsonNode lowerDegree = edu.get("structure").get("phase1").get("options").get(0);
-            ArrayNode results = studyData.findModulesByGroupId(lowerDegree.get("moduleGroupId").asText());
+            ArrayNode results = structureData.findModulesByGroupId(lowerDegree.get("moduleGroupId").asText());
             String code = null;
             for (JsonNode node : results) {
                 if (node.has("code")) {
@@ -74,11 +73,11 @@ public class StudyStructureService extends AbstractDataService {
 
     public String getEducations() throws IOException {
         ObjectNode wrapper = mapper.createObjectNode();
-        return printJson(wrapper.putArray("educations").addAll(studyData.getEducations()));
+        return printJson(wrapper.putArray("educations").addAll(structureData.getEducations()));
     }
 
     public String getById(String id, String lv) throws Exception {
-        JsonNode response = studyData.getById(id);
+        JsonNode response = structureData.getById(id);
         if (response != null) {
             return filterResultsByLvAndPrint(id, response, lv);
         }
@@ -86,7 +85,7 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     public String getAvailableLVsByDPCode(String degreeProgrammeCode) throws Exception {
-        JsonNode node = studyData.getDegreeProgrammeNode(degreeProgrammeCode);
+        JsonNode node = structureData.getDegreeProgrammeNode(degreeProgrammeCode);
         if (node != null) {
             return printJson(node.get("curriculumPeriodIds"));
         }
@@ -98,10 +97,10 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     public String getAvailableLVs(String id) throws Exception {
-        JsonNode education = studyData.findEducationById(id);
+        JsonNode education = structureData.findEducationById(id);
         JsonNode phase1 = getStudyPhase1(education);
         String dpId = phase1.get("moduleGroupId").asText();
-        JsonNode degreeProgrammes = studyData.findModulesByGroupId(dpId);
+        JsonNode degreeProgrammes = structureData.findModulesByGroupId(dpId);
 
         Set<String> lvs = new TreeSet<>();
         ArrayNode node = mapper.createArrayNode();
@@ -120,7 +119,7 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     public String getTree(String id, String lv) throws Exception {
-        JsonNode node = filterResults(id, studyData.findByGroupId(id), lv);
+        JsonNode node = filterResults(id, structureData.findByGroupId(id), lv);
         if (node == null) {
             return printJson(mapper.createObjectNode());
         }
@@ -140,7 +139,7 @@ public class StudyStructureService extends AbstractDataService {
     private String getTreeFromEducation(JsonNode node, String lv) throws Exception {
         JsonNode lowerDegree = node.get("structure").get("phase1").get("options").get(0);
         String moduleGroupId = lowerDegree.get("moduleGroupId").asText();
-        JsonNode firstModule = super.filterResults(moduleGroupId, studyData.findByGroupId(moduleGroupId), lv);
+        JsonNode firstModule = super.filterResults(moduleGroupId, structureData.findByGroupId(moduleGroupId), lv);
 
         if (firstModule != null) {
             traverseModule(firstModule, lv);
@@ -187,7 +186,7 @@ public class StudyStructureService extends AbstractDataService {
 
     private void handleCourseUnitRule(JsonNode ruleNode, String lv) throws Exception {
         String groupId = ruleNode.get("courseUnitGroupId").asText();
-        JsonNode node = courseService.getCUNameById(groupId, lv);
+        JsonNode node = courseData.getCourseUnitByGroupId(groupId, lv);
         if (node == null) {
             logger.warn("could not find course unit with group id " + groupId + " / lv " + lv);
             return;
@@ -219,7 +218,7 @@ public class StudyStructureService extends AbstractDataService {
 
     private void handleModuleRule(JsonNode ruleNode, String lv) throws Exception {
         String moduleGroupId = ruleNode.get("moduleGroupId").asText();
-        JsonNode node = studyData.findByGroupId(moduleGroupId);
+        JsonNode node = structureData.findByGroupId(moduleGroupId);
         node = super.filterResults(moduleGroupId, node, lv);
 
         if (node == null) {
@@ -247,14 +246,14 @@ public class StudyStructureService extends AbstractDataService {
     }
 
     private JsonNode getEducationByCode(String code) throws Exception {
-        JsonNode degreeProgramme = studyData.getDegreeProgrammeNode(code);
+        JsonNode degreeProgramme = structureData.getDegreeProgrammeNode(code);
 
         if (degreeProgramme == null) {
             return null;
         }
 
         String groupId = degreeProgramme.get("groupId").asText();
-        for (JsonNode education : studyData.getEducations()) {
+        for (JsonNode education : structureData.getEducations()) {
             JsonNode phase1 = getStudyPhase1(education);
             if (phase1 != null && phase1.get("moduleGroupId").asText().equals(groupId)) {
                 return education;
@@ -330,6 +329,6 @@ public class StudyStructureService extends AbstractDataService {
 
     @Override
     public JsonNode find(String id) throws Exception {
-        return studyData.find(id);
+        return structureData.find(id);
     }
 }

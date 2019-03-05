@@ -49,10 +49,13 @@ public abstract class AbstractDataService {
     protected ObjectMapper mapper = new ObjectMapper();
     protected DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    abstract JsonNode find(String id) throws Exception;
+    public abstract JsonNode find(String id) throws Exception;
 
     protected JsonNode filterResults(String id, JsonNode results, String lv) throws Exception {
         ArrayNode filteredResults = mapper.createArrayNode();
+        if(results == null) {
+            return filteredResults;
+        }
         if (lv == null || lv.isEmpty()) {
             return results;
         }

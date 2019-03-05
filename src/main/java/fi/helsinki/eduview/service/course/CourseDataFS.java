@@ -15,10 +15,11 @@
  * along with Eduviewer application.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package fi.helsinki.eduview.service;
+package fi.helsinki.eduview.service.course;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.helsinki.eduview.service.AbstractDataService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -30,14 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class CourseService extends AbstractDataService {
+public class CourseDataFS extends AbstractDataService implements CourseData {
 
-    private Logger logger = LogManager.getLogger(CourseService.class);
+    private Logger logger = LogManager.getLogger(CourseDataFS.class);
 
     private ObjectMapper mapper = new ObjectMapper();
     private List<JsonNode> cus = new ArrayList<>();
 
-    protected JsonNode find(String id) throws Exception {
+    public JsonNode find(String id) throws Exception {
         return openFile(id);
     }
 
@@ -49,7 +50,8 @@ public class CourseService extends AbstractDataService {
         return mapper.createArrayNode();
     }
 
-    public JsonNode getCUNameById(String id, String lv) throws Exception {
+    @Override
+    public JsonNode getCourseUnitByGroupId(String id, String lv) throws Exception {
         JsonNode root = openFile(id);
         return filterResults(id, root, lv);
     }

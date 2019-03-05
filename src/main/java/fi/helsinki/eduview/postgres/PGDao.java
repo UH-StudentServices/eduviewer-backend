@@ -29,12 +29,12 @@ public class PGDao {
     public List<String> getAllActiveEducations() {
         long start = System.currentTimeMillis();
         List<String> ids = namedParameterJdbcTemplate.queryForList("select id from education where documentstate = 'ACTIVE'", new MapSqlParameterSource(), String.class);
-        logger.info("active documentstate from education took " + (System.currentTimeMillis() - start));
+        logger.debug("active documentstate from education took " + (System.currentTimeMillis() - start));
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("ids", ids);
         start = System.currentTimeMillis();
         List<String> values = namedParameterJdbcTemplate.queryForList("select entity from sisu_exports where id in (:ids)", params, String.class);
-        logger.info("allActiveEntities from ids took " + (System.currentTimeMillis() - start));
+        logger.debug("allActiveEntities from ids took " + (System.currentTimeMillis() - start));
         return values;
     }
 
@@ -76,7 +76,13 @@ public class PGDao {
         params.addValue("groupid", groupId);
         long start = System.currentTimeMillis();
         List<String> response = namedParameterJdbcTemplate.queryForList("select entity from sisu_exports where id in (select id from module where groupid = :groupid)", params, String.class);
-        logger.info("findModulesByGroupId took " + (System.currentTimeMillis() - start));
+        logger.debug("findModulesByGroupId took " + (System.currentTimeMillis() - start));
         return response;
+    }
+
+    public List<String> findCourseUnitsByGroupId(String groupId) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("groupid", groupId);
+        return namedParameterJdbcTemplate.queryForList("select entity from sisu_exports where id in (select id from courseunit where groupid = :groupid)", params, String.class);
     }
 }

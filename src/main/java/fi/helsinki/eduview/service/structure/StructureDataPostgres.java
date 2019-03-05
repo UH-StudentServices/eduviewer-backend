@@ -1,4 +1,4 @@
-package fi.helsinki.eduview.service.data;
+package fi.helsinki.eduview.service.structure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +16,7 @@ import java.util.List;
  * @date: 11/02/2019
  */
 @Service
-public class StudyDataPostgres implements StudyData {
+public class StructureDataPostgres implements StructureData {
 
     private static ObjectMapper mapper = new ObjectMapper();
 

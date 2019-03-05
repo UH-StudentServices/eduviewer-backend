@@ -1,4 +1,4 @@
-package fi.helsinki.eduview.service.data;
+package fi.helsinki.eduview.service.structure;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,11 +22,11 @@ import java.util.List;
  * @date: 14/02/2019
  */
 @Service
-public class StudyDataFS implements StudyData {
+public class StructureDataFS implements StructureData {
 
     @Autowired protected Environment env;
 
-    private static Logger logger = LoggerFactory.getLogger(StudyDataFS.class);
+    private static Logger logger = LoggerFactory.getLogger(StructureDataFS.class);
     private static ObjectMapper mapper = new ObjectMapper();
 
     private List<JsonNode> educations = new ArrayList<>();
@@ -34,8 +34,12 @@ public class StudyDataFS implements StudyData {
 
     @PostConstruct
     public void init() throws IOException {
+        // don't initialize FS backend if it's not used.
+        if(!env.getProperty("backend-type", "FS").equals("FS")) {
+            return;
+        }
         ObjectMapper mapper = new ObjectMapper();
-        String dataLocation = env.getProperty("data-location", "backup/");
+        String dataLocation = env.getProperty("data-location", "data/");
         String educationsFN = env.getProperty("educations-dir", "kori-educations");
         String modulesFN = env.getProperty("modules-dir", "kori-modules");
         initAllFilesFromSameDirectory(mapper, dataLocation + educationsFN);

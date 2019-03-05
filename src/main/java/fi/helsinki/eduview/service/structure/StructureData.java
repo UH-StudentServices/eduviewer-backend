@@ -1,4 +1,4 @@
-package fi.helsinki.eduview.service.data;
+package fi.helsinki.eduview.service.structure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,7 +10,7 @@ import java.util.List;
  * @author: hpr
  * @date: 19/02/2019
  */
-public interface StudyData {
+public interface StructureData {
     JsonNode getById(String id) throws Exception;
 
     JsonNode find(String id) throws Exception;
