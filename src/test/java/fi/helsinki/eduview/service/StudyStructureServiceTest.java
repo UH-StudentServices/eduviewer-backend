@@ -50,12 +50,12 @@ public class StudyStructureServiceTest {
 
     @Test
     public void testTreeEducation() throws Exception {
-        logger.info(service.getTree("hy-EDU-114256075", "hy-lv-68"));
+        //logger.info(service.getTree("hy-EDU-114256075", "hy-lv-68"));
     }
 
     @Test
     public void testTreeModule() throws Exception {
-        logger.info(service.getTree("hy-DP-114257414", "hy-lv-68"));
+        //logger.info(service.getTree("hy-DP-114257414", "hy-lv-68"));
     }
 
 }
