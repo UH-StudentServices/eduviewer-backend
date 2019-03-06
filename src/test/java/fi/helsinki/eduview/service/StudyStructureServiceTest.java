@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
  * @author: hpr
  * @date: 03/07/2018
  */
-@RunWith(MockitoJUnitRunner.class)
+//@RunWith(MockitoJUnitRunner.class)
 public class StudyStructureServiceTest {
 
     private Logger logger = LogManager.getLogger(StudyStructureServiceTest.class);
