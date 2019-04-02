@@ -189,7 +189,7 @@ public class StudyStructureService extends AbstractDataService {
         JsonNode node = courseData.getCourseUnitByGroupId(groupId, lv);
         if (node == null) {
             logger.warn("could not find course unit with group id " + groupId + " / lv " + lv);
-            return;
+            node = mapper.createObjectNode();
         }
         addDataNode((ObjectNode) ruleNode, node);
     }
@@ -223,7 +223,7 @@ public class StudyStructureService extends AbstractDataService {
 
         if (node == null) {
             logger.warn("moduleGroupId " + moduleGroupId + " / " + lv + " is structuralNotActive");
-            return;
+            node = mapper.createObjectNode();
         }
         traverseModule(node, lv);
         addDataNode((ObjectNode) ruleNode, node);
